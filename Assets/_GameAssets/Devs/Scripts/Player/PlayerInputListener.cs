@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace RPG
+namespace RPG.Player
 {
     [RequireComponent(typeof(PlayerInput))]
     public class PlayerInputListener : MonoBehaviour

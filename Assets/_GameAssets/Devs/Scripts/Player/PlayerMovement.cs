@@ -1,8 +1,8 @@
 using UnityEngine;
 
-namespace RPG
+namespace RPG.Player
 {
-    public class PlayerMovement : MonoBehaviour
+    public class PlayerMovement : MonoBehaviour, IPlayerModule
     {
         Camera _mainCamera;
         Camera MainCamera
@@ -19,9 +19,9 @@ namespace RPG
 
         PlayerInputListener inputListener;
 
-        void Awake()
+        public void Init(PlayerController controller)
         {
-            inputListener = GetComponent<PlayerInputListener>();
+            inputListener = controller.GetInputListener();
         }
 
         void Update()
