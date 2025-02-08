@@ -1,19 +1,33 @@
+using System.Collections;
 using UnityEngine;
 
 namespace RPG.AI
 {
-    public class IdleAIEnemy_State : MonoBehaviour
+    public class IdleAIEnemy_State : IStateEnemyAI
     {
-        // Start is called once before the first execution of Update after the MonoBehaviour is created
-        void Start()
-        {
+        Vector3 startPosRef;
 
+        public IdleAIEnemy_State(Vector3 startPosRef)
+        {
+            this.startPosRef = startPosRef;
         }
 
-        // Update is called once per frame
-        void Update()
+        public void OnStart()
         {
+            Debug.Log($"OnStart, State : {this.GetType().Name}");
+        }
 
+        public void OnFinish()
+        {
+            Debug.Log($"OnFinish, State : {this.GetType().Name}");
+        }
+
+        public Color ColorGUI() => Color.white;
+
+        public async void Action()
+        {
+            
         }
     }
+
 }
