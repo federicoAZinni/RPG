@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace RPG.AI
@@ -26,7 +27,7 @@ namespace RPG.AI
 
         public async void Action()
         {
-            
+            await Task.Delay(1000);
         }
     }
 

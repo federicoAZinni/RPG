@@ -790,6 +790,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player_T: {fileID: 600433064}
+  visionOpening: 0.9
+  visionDistance: 5
+  onVision: 0
+  timeWaitBeforeAttack: 2
 --- !u!1 &1004534044
 GameObject:
   m_ObjectHideFlags: 0

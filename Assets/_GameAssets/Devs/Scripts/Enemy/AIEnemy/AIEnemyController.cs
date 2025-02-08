@@ -13,21 +13,35 @@ namespace RPG.AI
         //All AIState Refes
         IdleAIEnemy_State idleState;
         AlertAIEnemy_State alertState;
+        AttackAIEnemy_State attackState;
+        ChaseAIEnemy_State chaseState;
 
         //
         IStateEnemyAI lastState;
         IStateEnemyAI currentState;
 
 
+        [Space(5)]
+        [Header("Vision Refs")]
+        [SerializeField] float visionOpening = 0.9f;
+        [SerializeField] float visionDistance = 5;
+        public bool onVision;
+
+        [Space(5)]
+        [Header("Attack Refs")]
+        [SerializeField] float timeWaitBeforeAttack;
+
         private void Awake()
         {
             InitStates();
         }
 
-        private void InitStates()
+        private void InitStates() //Inicializamos cada estado con las dependencias que tengan.
         {
             idleState = new IdleAIEnemy_State(transform.position);
-            alertState = new AlertAIEnemy_State(player_T,transform,this);
+            alertState = new AlertAIEnemy_State(player_T,transform,this, visionOpening, visionDistance, timeWaitBeforeAttack);
+            attackState = new AttackAIEnemy_State();
+            chaseState = new ChaseAIEnemy_State();
         }
 
 
@@ -41,17 +55,27 @@ namespace RPG.AI
         private void Update()
         {
             if (Input.GetKeyDown(KeyCode.Space)) ChangeState(State.Alert);
+            onVision = OnVision(); //Detecta si el player se enceuntra dentro del cono de vision.
         }
 
 
-        public void ChangeState(State _newState)
+        public void ChangeState(State _newState) //Cambia el estado y guarda el ultimo en el que estuvo.
         {
-            IStateEnemyAI newState = GetStateByEnum(_newState);
+            IStateEnemyAI newState = GetStateByEnum(_newState); //Se obtiene la instancia del estado que corresponda segun el enum del parametro
             if (currentState == newState) return;
 
-            currentState?.OnFinish();
+            currentState?.OnFinish(); //Se ejecuta el final del estado
             lastState = currentState;
             currentState = newState;
+            currentState.OnStart(); //Se ejecuta el inicio del estado
+        }
+
+        public void ChangeToLastState()
+        {
+            IStateEnemyAI temp = currentState;
+            currentState?.OnFinish();
+            currentState = lastState;
+            lastState = temp;
             currentState.OnStart();
         }
 
@@ -65,16 +89,31 @@ namespace RPG.AI
                 case State.Alert:
                     return alertState;
                 case State.Chase:
-                    break;
+                    return chaseState;
                 case State.Attack:
-                    break;
+                    return attackState;
                 default:
                     break;
             }
             return null;
         }
 
-        private void OnDrawGizmos()
+        bool OnVision()
+        {
+            Vector3 dir = (player_T.position - transform.position).normalized;
+
+            if (Vector3.Distance(player_T.position, transform.position) < visionDistance)
+            {
+                float dot = Vector3.Dot(transform.right, dir);
+                if (dot < visionOpening && dot > -visionOpening)
+                    return true;
+            }
+            return false;
+        }
+
+
+
+        private void OnDrawGizmos() //Crea una esfera y cambia el color dependiendo el estado en que se encuentre.
         {
             if (currentState == null) return;
             Gizmos.color = currentState.ColorGUI();

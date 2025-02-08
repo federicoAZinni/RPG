@@ -8,18 +8,22 @@ namespace RPG.AI
     public class AlertAIEnemy_State : IStateEnemyAI
     {
         AIEnemyController aiEnemyController;
+
         Transform myTransform;
         Transform player_T;
 
-        float visionOpening = 0.9f;
-        float visionDistance = 5;
+        float visionOpening;
+        float visionDistance;
+        float timeWaitBeforeAttack;
 
-        float timeWaitBeforeAttack = 2;
-        public AlertAIEnemy_State(Transform player_T, Transform myTransform, AIEnemyController aiEnemyController)
+        public AlertAIEnemy_State(Transform player_T, Transform myTransform, AIEnemyController aiEnemyController,float visionOpening,float visionDistance,float timeWaitBeforeAttack)
         {
             this.player_T = player_T;
             this.myTransform = myTransform;
             this.aiEnemyController = aiEnemyController;
+            this.visionOpening = visionOpening;
+            this.visionDistance = visionDistance;
+            this.timeWaitBeforeAttack = timeWaitBeforeAttack;
         }
 
         public void OnStart()
@@ -39,28 +43,22 @@ namespace RPG.AI
         {
             float timeOnVision = 0;
 
-            while (true)
+            while (aiEnemyController.onVision) //Siempre y cuando el player este en vision va a contar
             {
-                if(OnVision())
-                    timeOnVision += Time.deltaTime;
+                if (timeOnVision > timeWaitBeforeAttack)
+                { 
+                    aiEnemyController.ChangeState(State.Chase);//Si cumple con el tiempo de alerta, cambia a atacar
+                    return;
+                }
 
-                if (timeOnVision > timeWaitBeforeAttack) break;
-
+                timeOnVision += Time.deltaTime;
                 await Task.Yield();
             }
+            //Si se llega air de vision antes de terminar el tiempo, cambia al ultimo estado
+            aiEnemyController.ChangeToLastState();
+
         }
 
-        bool OnVision()
-        {
-            Vector3 dir = (player_T.position - myTransform.position).normalized;
-
-            if (Vector3.Distance(player_T.position, myTransform.position) < visionDistance)
-            {
-                float dot = Vector3.Dot(myTransform.right, dir);
-                    if (dot < visionOpening && dot > -visionOpening)
-                        return true;
-            }
-            return false;
-        }
+        
     }
 }
