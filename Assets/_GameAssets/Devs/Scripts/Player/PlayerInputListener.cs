@@ -19,6 +19,9 @@ namespace RPG.Player
         public Vector2 MoveValue { get; private set; }
         public Vector2 MousePosition { get; private set; }
 
+        public System.Action OnAttack;
+        public System.Action<PowerTypes> OnPower;
+
         void Awake()
         {
             PInput.onActionTriggered += OnActionTriggered;
@@ -35,6 +38,26 @@ namespace RPG.Player
 
                 case "MousePosition":
                     MousePosition = context.ReadValue<Vector2>();
+                    break;
+
+                case "Attack":
+                    if (context.performed) OnAttack?.Invoke();
+                    break;
+
+                case "Power1":
+                    if (context.performed) OnPower?.Invoke(PowerTypes.Power1);
+                    break;
+
+                case "Power2":
+                    if (context.performed) OnPower?.Invoke(PowerTypes.Power2);
+                    break;
+
+                case "Power3":
+                    if (context.performed) OnPower?.Invoke(PowerTypes.Power3);
+                    break;
+
+                case "Power4":
+                    if (context.performed) OnPower?.Invoke(PowerTypes.Power4);
                     break;
             }
         }

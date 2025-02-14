@@ -11,6 +11,8 @@ GameObject:
   - component: {fileID: 1278766510769579260}
   - component: {fileID: 2711897274741422270}
   - component: {fileID: 7611930086851930649}
+  - component: {fileID: 4870312991707375397}
+  - component: {fileID: 1346127943647658815}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -69,6 +71,34 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   baseMovementSpeed: 20
   rotationSpeed: 0
+--- !u!114 &4870312991707375397
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5401159109282638850}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f9958a24abf11c418957449b60e4e81, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bonkDistance: 5
+  bonkDamage: 10
+  bonkCooldown: 0.2
+--- !u!114 &1346127943647658815
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5401159109282638850}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e2ad8ff63a30a84493e4d671ca8defe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHP: 100
 --- !u!1 &7784051249264049401
 GameObject:
   m_ObjectHideFlags: 0
