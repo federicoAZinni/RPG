@@ -14,6 +14,7 @@ namespace RPG.AI
 
         float visionOpening;
         float visionDistance;
+        float visionDistanceToChase;
         float timeWaitBeforeAttack;
 
         public AlertAIEnemy_State(Transform player_T, Transform myTransform, AIEnemyController aiEnemyController,float visionOpening,float visionDistance,float timeWaitBeforeAttack)
@@ -24,6 +25,8 @@ namespace RPG.AI
             this.visionOpening = visionOpening;
             this.visionDistance = visionDistance;
             this.timeWaitBeforeAttack = timeWaitBeforeAttack;
+
+            visionDistanceToChase = visionDistance * 0.7f;
         }
 
         public void OnStart()
@@ -43,19 +46,20 @@ namespace RPG.AI
         {
             float timeOnVision = 0;
 
-            while (aiEnemyController.onVision) //Siempre y cuando el player este en vision va a contar
+            while (timeOnVision < timeWaitBeforeAttack) 
             {
-                if (timeOnVision > timeWaitBeforeAttack)
-                { 
-                    aiEnemyController.ChangeState(State.Chase);//Si cumple con el tiempo de alerta, cambia a atacar
-                    return;
-                }
-
                 timeOnVision += Time.deltaTime;
                 await Task.Yield();
             }
+
+            if (aiEnemyController.onVision)
+            {
+                aiEnemyController.ChangeState(State.Chase);//Si cumple con el tiempo de alerta y está en vision cambia a perseguir
+                return;
+            }
+
             //Si se llega air de vision antes de terminar el tiempo, cambia al ultimo estado
-            aiEnemyController.ChangeToLastState();
+            aiEnemyController.ChangeState(State.Idle);
 
         }
 

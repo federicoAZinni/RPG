@@ -1,5 +1,6 @@
 using NUnit.Framework.Constraints;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.UIElements;
 
 namespace RPG.AI
@@ -9,6 +10,8 @@ namespace RPG.AI
 
         //Dependencias
         [SerializeField] Transform player_T;
+        [SerializeField] NavMeshAgent agent;
+        [SerializeField] MeshFilter meshFilter;
 
         //All AIState Refes
         IdleAIEnemy_State idleState;
@@ -31,6 +34,8 @@ namespace RPG.AI
         [Header("Attack Refs")]
         [SerializeField] float timeWaitBeforeAttack;
 
+        bool onVisionflag;
+
         private void Awake()
         {
             InitStates();
@@ -38,10 +43,10 @@ namespace RPG.AI
 
         private void InitStates() //Inicializamos cada estado con las dependencias que tengan.
         {
-            idleState = new IdleAIEnemy_State(transform.position);
+            idleState = new IdleAIEnemy_State(transform.position,this,agent, meshFilter.mesh);
             alertState = new AlertAIEnemy_State(player_T,transform,this, visionOpening, visionDistance, timeWaitBeforeAttack);
             attackState = new AttackAIEnemy_State();
-            chaseState = new ChaseAIEnemy_State();
+            chaseState = new ChaseAIEnemy_State(player_T,agent,this);
         }
 
 
@@ -54,8 +59,16 @@ namespace RPG.AI
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.Space)) ChangeState(State.Alert);
             onVision = OnVision(); //Detecta si el player se enceuntra dentro del cono de vision.
+
+            //if(onVision != onVisionflag)
+            //{
+            //   onVisionflag = onVision;
+            //   if(onVision) Debug.Log("Event onVision");
+            //}
+
+           
+          
         }
 
 
@@ -63,10 +76,11 @@ namespace RPG.AI
         {
             IStateEnemyAI newState = GetStateByEnum(_newState); //Se obtiene la instancia del estado que corresponda segun el enum del parametro
             if (currentState == newState) return;
-
+            agent.isStopped = true;
             currentState?.OnFinish(); //Se ejecuta el final del estado
             lastState = currentState;
             currentState = newState;
+            agent.isStopped = false;
             currentState.OnStart(); //Se ejecuta el inicio del estado
         }
 
