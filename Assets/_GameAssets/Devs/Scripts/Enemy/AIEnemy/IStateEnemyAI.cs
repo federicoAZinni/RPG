@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace RPG.AI
 {
@@ -9,7 +10,7 @@ namespace RPG.AI
         public void OnStart();
         public void OnFinish();
         public Color ColorGUI();
-        public void Action();
+        public Task Action(CancellationToken cancellationToken);
 
     }
 }

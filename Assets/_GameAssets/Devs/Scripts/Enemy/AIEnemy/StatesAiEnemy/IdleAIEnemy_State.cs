@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AI;
@@ -22,10 +23,17 @@ namespace RPG.AI
             this.mesh = mesh;
         }
 
-        public void OnStart()
+        public async void OnStart()
         {
             Debug.Log($"OnStart, State : {this.GetType().Name}");
-            Action();
+
+            var tokenSource = new CancellationTokenSource();
+            CancellationToken ct = tokenSource.Token;
+
+            AIEnemyController.OnExitPlayMode += () => { tokenSource.Cancel(); tokenSource.Dispose(); };
+
+            await Action(ct);
+
         }
 
         public void OnFinish()
@@ -35,11 +43,14 @@ namespace RPG.AI
 
         public Color ColorGUI() => Color.white;
 
-        public async void Action()
+        public async Task Action(CancellationToken cancellationToken)
         {
-            while (!aiEnemyController.onVision ) 
+            while (!aiEnemyController.onVisionToAlert ) 
             {
-
+                if (cancellationToken.IsCancellationRequested) //Necesario para frenar la Task despues de salir del playmode, sin esto, sigue corriendo hasta darle play devuelta
+                    cancellationToken.ThrowIfCancellationRequested();
+                
+                    
                 posRandom = GetPosAvailablePosInArea(mesh);
                 agent.SetDestination(posRandom);
                 await Task.Delay(4000);
@@ -48,6 +59,7 @@ namespace RPG.AI
             aiEnemyController.ChangeState(State.Alert);
 
         }
+
         Vector3 GetPosAvailablePosInArea(Mesh meshPrefab)
         {
             float yHeight = meshPrefab.bounds.size.y / 2;

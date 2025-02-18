@@ -1,4 +1,5 @@
 using NUnit.Framework.Constraints;
+using System;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UIElements;
@@ -27,14 +28,18 @@ namespace RPG.AI
         [Space(5)]
         [Header("Vision Refs")]
         [SerializeField] float visionOpening = 0.9f;
-        [SerializeField] float visionDistance = 5;
-        public bool onVision;
+        [SerializeField] float visionDistanceToAlert;
+        [SerializeField] float visionDistanceToChase;
+        public bool onVisionToAlert;
+        public bool onVisionToChase;
 
         [Space(5)]
         [Header("Attack Refs")]
         [SerializeField] float timeWaitBeforeAttack;
 
         bool onVisionflag;
+
+        public static Action OnExitPlayMode;
 
         private void Awake()
         {
@@ -44,7 +49,7 @@ namespace RPG.AI
         private void InitStates() //Inicializamos cada estado con las dependencias que tengan.
         {
             idleState = new IdleAIEnemy_State(transform.position,this,agent, meshFilter.mesh);
-            alertState = new AlertAIEnemy_State(player_T,transform,this, visionOpening, visionDistance, timeWaitBeforeAttack);
+            alertState = new AlertAIEnemy_State(player_T,transform,this, timeWaitBeforeAttack);
             attackState = new AttackAIEnemy_State();
             chaseState = new ChaseAIEnemy_State(player_T,agent,this);
         }
@@ -59,16 +64,9 @@ namespace RPG.AI
 
         private void Update()
         {
-            onVision = OnVision(); //Detecta si el player se enceuntra dentro del cono de vision.
+            onVisionToAlert = OnVision(visionDistanceToAlert); //Detecta si el player se enceuntra dentro del cono de vision de alerta
+            onVisionToChase = OnVision(visionDistanceToChase); //Detecta si el player se enceuntra dentro del cono de vision de perseguir
 
-            //if(onVision != onVisionflag)
-            //{
-            //   onVisionflag = onVision;
-            //   if(onVision) Debug.Log("Event onVision");
-            //}
-
-           
-          
         }
 
 
@@ -112,11 +110,11 @@ namespace RPG.AI
             return null;
         }
 
-        bool OnVision()
+        bool OnVision(float distance)
         {
             Vector3 dir = (player_T.position - transform.position).normalized;
 
-            if (Vector3.Distance(player_T.position, transform.position) < visionDistance)
+            if (Vector3.Distance(player_T.position, transform.position) < distance)
             {
                 float dot = Vector3.Dot(transform.right, dir);
                 if (dot < visionOpening && dot > -visionOpening)
@@ -132,6 +130,11 @@ namespace RPG.AI
             if (currentState == null) return;
             Gizmos.color = currentState.ColorGUI();
             Gizmos.DrawSphere(new Vector3(transform.position.x, transform.position.y + 2, transform.position.z), 0.5f);
+        }
+
+        private void OnApplicationQuit()
+        {
+            OnExitPlayMode?.Invoke();
         }
     }
 

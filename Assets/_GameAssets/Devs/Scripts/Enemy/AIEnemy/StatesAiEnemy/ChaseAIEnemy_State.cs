@@ -2,6 +2,7 @@ using RPG.AI;
 using UnityEngine;
 using System.Threading.Tasks;
 using UnityEngine.AI;
+using System.Threading;
 
 namespace RPG
 {
@@ -16,12 +17,16 @@ namespace RPG
             this.target_T = target_T;
             this.agent = agent;
             this.aiEnemyController = aiEnemyController;
+
         }
 
-        public async void Action()
+        public async Task Action(CancellationToken cancellationToken)
         {
-            while (aiEnemyController.onVision) 
+            while (aiEnemyController.onVisionToAlert) 
             {
+                if (cancellationToken.IsCancellationRequested) //Necesario para frenar la Task despues de salir del playmode, sin esto, sigue corriendo hasta darle play devuelta
+                    cancellationToken.ThrowIfCancellationRequested();
+
                 agent.SetDestination(target_T.position);
                 await Task.Delay(1000);
             }
@@ -37,10 +42,15 @@ namespace RPG
             
         }
 
-        public void OnStart()
+        public async void OnStart()
         {
             Debug.Log($"OnStart, State : {this.GetType().Name}");
-            Action();
+            var tokenSource = new CancellationTokenSource();
+            CancellationToken ct = tokenSource.Token;
+
+            AIEnemyController.OnExitPlayMode += () => { tokenSource.Cancel(); tokenSource.Dispose(); };
+
+            await Action(ct);
         }
     }
 }
