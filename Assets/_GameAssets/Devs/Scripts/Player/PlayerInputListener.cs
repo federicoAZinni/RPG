@@ -18,7 +18,8 @@ namespace RPG.Player
 
         public Vector2 MoveValue { get; private set; }
         public Vector2 MousePosition { get; private set; }
-
+        public Vector2 JoyLookValue { get; private set; }
+        
         public System.Action OnAttack;
         public System.Action<PowerTypes> OnPower;
 
@@ -36,7 +37,13 @@ namespace RPG.Player
                     else if (context.canceled) MoveValue = Vector2.zero;
                     break;
 
+                case "Look":
+                    if (context.performed) JoyLookValue = context.ReadValue<Vector2>();
+                    else if (context.canceled) JoyLookValue = Vector2.zero;
+                    break;
+
                 case "MousePosition":
+                    if (context.canceled) break;
                     MousePosition = context.ReadValue<Vector2>();
                     break;
 

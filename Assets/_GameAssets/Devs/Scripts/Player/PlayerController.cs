@@ -10,6 +10,7 @@ namespace RPG.Player
         [SerializeField] Transform playerSpawnPoint;
         [SerializeField] GameObject playerPrefab;
         [SerializeField] CinemachineStateDrivenCamera stateCamera;
+        [SerializeField] SelectionCursor playerSelectionCursor;
 
         Camera _mainCamera;
         public Camera MainCamera
@@ -67,5 +68,6 @@ namespace RPG.Player
         }
 
         public PlayerInputListener GetInputListener() => InputListener;
+        public SelectionCursor GetCursor() => playerSelectionCursor;
     }
 }

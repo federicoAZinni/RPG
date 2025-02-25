@@ -29,8 +29,8 @@ namespace RPG.Player
             transform.position += currentMovementSpeed * inputListener.MoveValue.y * Vector3.forward;
             transform.position += currentMovementSpeed * inputListener.MoveValue.x * Vector3.right;
 
-            if (!pController.GetCursorWorldPos(out Vector3 cursorPos)) return;
-            Vector3 dirVector = cursorPos - transform.position;
+            //if (!pController.GetCursorWorldPos(out Vector3 cursorPos)) return;
+            Vector3 dirVector = pController.GetCursor().transform.position - transform.position;
             transform.forward = new Vector3(dirVector.x, 0, dirVector.z);
         }
     }
