@@ -28,7 +28,14 @@ namespace RPG
                     cancellationToken.ThrowIfCancellationRequested();
 
                 agent.SetDestination(target_T.position);
-                await Task.Delay(1000);
+
+                if(aiEnemyController.onRangeToAttack)
+                {
+                    aiEnemyController.ChangeState(State.Attack);
+                    return;
+                }
+
+                await Task.Delay(500);
             }
 
             aiEnemyController.ChangeState(State.Alert);

@@ -14,14 +14,14 @@ namespace RPG.AI
         Transform player_T;
 
        
-        float timeWaitBeforeAttack;
+        float timeWaitBeforeChase;
 
-        public AlertAIEnemy_State(Transform player_T, Transform myTransform, AIEnemyController aiEnemyController, float timeWaitBeforeAttack)
+        public AlertAIEnemy_State(Transform player_T, Transform myTransform, AIEnemyController aiEnemyController, float timeWaitBeforeChase)
         {
             this.player_T = player_T;
             this.myTransform = myTransform;
             this.aiEnemyController = aiEnemyController;
-            this.timeWaitBeforeAttack = timeWaitBeforeAttack;
+            this.timeWaitBeforeChase = timeWaitBeforeChase;
         }
 
         public async void OnStart()
@@ -47,7 +47,7 @@ namespace RPG.AI
         {
             float timeOnVision = 0;
 
-            while (timeOnVision < timeWaitBeforeAttack) 
+            while (timeOnVision < timeWaitBeforeChase) 
             {
                 if (cancellationToken.IsCancellationRequested) //Necesario para frenar la Task despues de salir del playmode, sin esto, sigue corriendo hasta darle play devuelta
                     cancellationToken.ThrowIfCancellationRequested();

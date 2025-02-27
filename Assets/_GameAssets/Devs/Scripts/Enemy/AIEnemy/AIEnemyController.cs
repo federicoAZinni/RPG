@@ -1,5 +1,6 @@
 using NUnit.Framework.Constraints;
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UIElements;
@@ -30,43 +31,51 @@ namespace RPG.AI
         [SerializeField] float visionOpening = 0.9f;
         [SerializeField] float visionDistanceToAlert;
         [SerializeField] float visionDistanceToChase;
+        [SerializeField] float timeWaitBeforeChase;
+
         public bool onVisionToAlert;
         public bool onVisionToChase;
+        
 
         [Space(5)]
         [Header("Attack Refs")]
+        [SerializeField] float rangeToAttack;
         [SerializeField] float timeWaitBeforeAttack;
 
-        bool onVisionflag;
+        public bool onRangeToAttack;
+
 
         public static Action OnExitPlayMode;
 
-        private void Awake()
-        {
-            InitStates();
-        }
+        
 
         private void InitStates() //Inicializamos cada estado con las dependencias que tengan.
         {
             idleState = new IdleAIEnemy_State(transform.position,this,agent, meshFilter.mesh);
-            alertState = new AlertAIEnemy_State(player_T,transform,this, timeWaitBeforeAttack);
-            attackState = new AttackAIEnemy_State();
+            alertState = new AlertAIEnemy_State(player_T,transform,this, timeWaitBeforeChase);
             chaseState = new ChaseAIEnemy_State(player_T,agent,this);
+            attackState = new AttackAIEnemy_State(this, rangeToAttack, timeWaitBeforeAttack);
+           
         }
 
 
 
-        private void Start()
+        private IEnumerator Start()
         {
+            yield return new WaitForSeconds(0.1f);// cambiar esto
+            player_T = GameObject.FindGameObjectWithTag("Player").transform;// cambiar esto
+
+            InitStates();
             ChangeState(State.Idle);
         }
 
 
         private void Update()
         {
+            if (player_T == null) return;// cambiar esto
             onVisionToAlert = OnVision(visionDistanceToAlert); //Detecta si el player se enceuntra dentro del cono de vision de alerta
             onVisionToChase = OnVision(visionDistanceToChase); //Detecta si el player se enceuntra dentro del cono de vision de perseguir
-
+            onRangeToAttack = OnVision(rangeToAttack);
         }
 
 
@@ -79,7 +88,7 @@ namespace RPG.AI
             lastState = currentState;
             currentState = newState;
             agent.isStopped = false;
-            currentState.OnStart(); //Se ejecuta el inicio del estado
+            currentState.OnStart(); //Se ejecuta el inicio del nuevo estado
         }
 
         public void ChangeToLastState()
