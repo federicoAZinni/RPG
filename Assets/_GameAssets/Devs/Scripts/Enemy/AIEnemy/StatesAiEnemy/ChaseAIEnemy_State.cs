@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using UnityEngine.AI;
 using System.Threading;
 
-namespace RPG
+namespace RPG.AI
 {
     public class ChaseAIEnemy_State : IStateEnemyAI
     {
@@ -55,7 +55,7 @@ namespace RPG
             var tokenSource = new CancellationTokenSource();
             CancellationToken ct = tokenSource.Token;
 
-            AIEnemyController.OnExitPlayMode += () => { tokenSource.Cancel(); tokenSource.Dispose(); };
+            AIEnemyController.OnExitPlayMode += () => { tokenSource.Cancel(); };
 
             await Action(ct);
         }

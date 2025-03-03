@@ -4,19 +4,21 @@ using UnityEngine;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace RPG
+namespace RPG.AI
 {
     public class AttackAIEnemy_State : IStateEnemyAI
     {
         private AIEnemyController aiEnemyController;
         private float rangeToAttack;
         private float timeWaitBeforeAttack;
+        private Animator anim;
 
-        public AttackAIEnemy_State(AIEnemyController aiEnemyController, float rangeToAttack, float timeWaitBeforeAttack)
+        public AttackAIEnemy_State(AIEnemyController aiEnemyController, Animator anim,float rangeToAttack, float timeWaitBeforeAttack)
         {
             this.aiEnemyController = aiEnemyController;
             this.rangeToAttack = rangeToAttack;
             this.timeWaitBeforeAttack = timeWaitBeforeAttack;
+            this.anim = anim;
         }
 
         public async void OnStart()
@@ -26,21 +28,30 @@ namespace RPG
             var tokenSource = new CancellationTokenSource();
             CancellationToken ct = tokenSource.Token;
 
-            AIEnemyController.OnExitPlayMode += () => { tokenSource.Cancel(); tokenSource.Dispose(); };
+            AIEnemyController.OnExitPlayMode += () => { tokenSource.Cancel(); };
 
             await Action(ct);
         }
 
         public async Task Action(CancellationToken cancellationToken)
         {
+            float time = timeWaitBeforeAttack;
+
             while (aiEnemyController.onRangeToAttack)
             {
                 if (cancellationToken.IsCancellationRequested) //Necesario para frenar la Task despues de salir del playmode, sin esto, sigue corriendo hasta darle play devuelta
                     cancellationToken.ThrowIfCancellationRequested();
 
-                Debug.Log("Attack");
+                if(timeWaitBeforeAttack < time)
+                {
+                    time = 0;
+                    anim.SetTrigger("Attack");
+                    Debug.Log("Attack");
+                }
 
-                await Task.Delay((int)timeWaitBeforeAttack*1000);// Cmabiar esto
+                time += Time.deltaTime;
+
+                await Task.Yield();
             }
 
             aiEnemyController.ChangeState(State.Chase);

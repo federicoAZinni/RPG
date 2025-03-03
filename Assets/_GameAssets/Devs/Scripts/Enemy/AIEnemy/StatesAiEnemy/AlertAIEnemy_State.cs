@@ -12,8 +12,10 @@ namespace RPG.AI
 
         Transform myTransform;
         Transform player_T;
+        Vector3 lastPosPlayerWatched;
 
-       
+        Collider[] possibleTargets;
+
         float timeWaitBeforeChase;
 
         public AlertAIEnemy_State(Transform player_T, Transform myTransform, AIEnemyController aiEnemyController, float timeWaitBeforeChase)
@@ -31,9 +33,24 @@ namespace RPG.AI
             var tokenSource = new CancellationTokenSource();
             CancellationToken ct = tokenSource.Token;
 
-            AIEnemyController.OnExitPlayMode += () => { tokenSource.Cancel(); tokenSource.Dispose(); };
+            AIEnemyController.OnExitPlayMode += () => { tokenSource.Cancel(); };
 
-           await Action(ct);
+            lastPosPlayerWatched = player_T.position;
+            
+            AlertToOtherEnemiesInRange();
+
+            await Action(ct);
+        }
+
+        private void AlertToOtherEnemiesInRange()
+        {
+            possibleTargets = Physics.OverlapSphere(myTransform.position, 10, LayerMask.GetMask("Characters"));
+
+            for (int i = 0; i < possibleTargets.Length; i++)
+            {
+                Debug.Log(possibleTargets[i].name);
+                possibleTargets[i].GetComponent<AIEnemyController>().ChangeState(State.Alert);
+            }
         }
 
         public void OnFinish()
@@ -47,11 +64,14 @@ namespace RPG.AI
         {
             float timeOnVision = 0;
 
-            while (timeOnVision < timeWaitBeforeChase) 
+            while (timeOnVision < timeWaitBeforeChase)
             {
                 if (cancellationToken.IsCancellationRequested) //Necesario para frenar la Task despues de salir del playmode, sin esto, sigue corriendo hasta darle play devuelta
                     cancellationToken.ThrowIfCancellationRequested();
 
+                Vector3 relativePos = player_T.position - myTransform.position;
+                Quaternion posWithOutY = Quaternion.LookRotation(relativePos, Vector3.up);
+                myTransform.rotation = Quaternion.Lerp(myTransform.rotation, posWithOutY, timeOnVision);
 
                 timeOnVision += Time.deltaTime;
 

@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AI;
+
 namespace RPG.AI
 {
     public class IdleAIEnemy_State : IStateEnemyAI
@@ -12,7 +13,8 @@ namespace RPG.AI
         NavMeshAgent agent;
         Mesh mesh;
 
-        float areaRadius = 5;
+        float areaRadius = 5;// Area que va a usar para crear random target asi se mueve cada cierto tiempo.
+        float timeToMoveToRandomPos;
         Vector3 posRandom;
 
         public IdleAIEnemy_State(Vector3 startPosRef, AIEnemyController aiEnemyController,NavMeshAgent agent, Mesh mesh)
@@ -30,7 +32,9 @@ namespace RPG.AI
             var tokenSource = new CancellationTokenSource();
             CancellationToken ct = tokenSource.Token;
 
-            AIEnemyController.OnExitPlayMode += () => { tokenSource.Cancel(); tokenSource.Dispose(); };
+            AIEnemyController.OnExitPlayMode += () => { tokenSource.Cancel(); };
+
+            timeToMoveToRandomPos = 0;
 
             await Action(ct);
 
@@ -45,15 +49,27 @@ namespace RPG.AI
 
         public async Task Action(CancellationToken cancellationToken)
         {
+            float time = 0;
+
             while (!aiEnemyController.onVisionToAlert ) 
             {
                 if (cancellationToken.IsCancellationRequested) //Necesario para frenar la Task despues de salir del playmode, sin esto, sigue corriendo hasta darle play devuelta
                     cancellationToken.ThrowIfCancellationRequested();
                 
                     
-                posRandom = GetPosAvailablePosInArea(mesh);
-                agent.SetDestination(posRandom);
-                await Task.Delay(4000);
+
+                if(timeToMoveToRandomPos < time)//Esto hace que cada random tiempo cree una posicion nueva para que se mueva.
+                {
+                    timeToMoveToRandomPos = Random.Range(10, 20);
+                    time = 0;
+                    posRandom = GetPosAvailablePosInArea(mesh);
+                    agent.SetDestination(posRandom);
+                }
+
+                time += Time.deltaTime;
+
+                await Task.Yield();
+
             }
 
             aiEnemyController.ChangeState(State.Alert);
