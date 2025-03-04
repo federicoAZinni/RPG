@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 4870312991707375397}
   - component: {fileID: 1346127943647658815}
   - component: {fileID: 2750434557950646924}
+  - component: {fileID: 3113357706302896112}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -113,6 +114,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   joyCursorSpeed: 25
+  timeToUnlockCursor: 0.15
+--- !u!114 &3113357706302896112
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5401159109282638850}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a82cd2485e352fc46aa21b6c1f81aad0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &7784051249264049401
 GameObject:
   m_ObjectHideFlags: 0

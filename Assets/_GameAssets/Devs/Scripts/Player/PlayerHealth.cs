@@ -24,6 +24,7 @@ namespace RPG.Player
         {
             if (!moduleEnabled) return;
             HP = Mathf.Clamp(HP - ammount, 0, maxHP);
+            Debug.LogFormat("Player loss {0} HP!", ammount);
             if (HP == 0) OnDeath();
         }
 
@@ -31,6 +32,7 @@ namespace RPG.Player
         {
             if (!moduleEnabled) return;
             HP = Mathf.Clamp(HP + ammount, 0, maxHP);
+            Debug.LogFormat("Player got {0} HP!", ammount);
         }
 
         void OnDeath()
