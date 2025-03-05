@@ -1,4 +1,3 @@
-using System;
 using Unity.Cinemachine;
 using UnityEngine;
 
@@ -12,6 +11,7 @@ namespace RPG.Player
         [SerializeField] GameObject playerPrefab;
         [SerializeField] CinemachineStateDrivenCamera stateCamera;
         [SerializeField] SelectionCursor playerSelectionCursor;
+        [SerializeField] PlayerHUD playerHUD;
 
         Camera _mainCamera;
         public Camera MainCamera
@@ -38,7 +38,7 @@ namespace RPG.Player
         Vector2 lastMousePosition;
         Vector3 lastCursorWorlPos;
 
-        public Action OnInteraction;
+        public System.Action OnInteraction;
 
         void Start()
         {
@@ -49,13 +49,25 @@ namespace RPG.Player
             lastCursorWorlPos = Vector3.negativeInfinity;
 
             playerModules = playerObject.GetComponents<IPlayerModule>();
-            
+            PlayerHealth healthModule = null;
+
             int size = playerModules.Length;
             for (int i = 0; i < size; i++)
             {
+                if (playerModules[i] is PlayerHealth) healthModule = playerModules[i] as PlayerHealth;
                 playerModules[i].Init(this);
                 playerModules[i].ToggleModule(true);
             }
+
+            if (healthModule == null) return;
+            playerHUD.OnPlayerSpawns(new PlayerHUD.PlayerHUDInitData
+            {
+                maxPlayerHP = healthModule.MaxHP,
+                maxPlayerMana = 100,
+                playerHP = healthModule.HP,
+                playerMana = 100,
+                cursor = playerSelectionCursor
+            });
         }
 
         public bool GetCursorWorldPos(out Vector3 worldPos)
@@ -77,6 +89,11 @@ namespace RPG.Player
         }
 
         public void UpdateCursorWorldPos(Vector3 newPos) => lastCursorWorlPos = newPos;
+
+        public void OnPlayerHPChange(float currentHP)
+        {
+            playerHUD.UpdatePlayerHP(currentHP);
+        }
 
         public void OnPlayerCharacterDies()
         {

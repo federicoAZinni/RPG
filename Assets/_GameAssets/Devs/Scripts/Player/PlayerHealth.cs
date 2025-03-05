@@ -7,6 +7,7 @@ namespace RPG.Player
         [SerializeField] float maxHP;
 
         public float HP { get; private set; }
+        public float MaxHP => maxHP;
 
         bool moduleEnabled;
         PlayerController pController;
@@ -24,6 +25,7 @@ namespace RPG.Player
         {
             if (!moduleEnabled) return;
             HP = Mathf.Clamp(HP - ammount, 0, maxHP);
+            pController.OnPlayerHPChange(HP);
             Debug.LogFormat("Player loss {0} HP!", ammount);
             if (HP == 0) OnDeath();
         }
@@ -32,6 +34,7 @@ namespace RPG.Player
         {
             if (!moduleEnabled) return;
             HP = Mathf.Clamp(HP + ammount, 0, maxHP);
+            pController.OnPlayerHPChange(HP);
             Debug.LogFormat("Player got {0} HP!", ammount);
         }
 

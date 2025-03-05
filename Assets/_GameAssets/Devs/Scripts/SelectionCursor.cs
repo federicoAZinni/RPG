@@ -20,6 +20,7 @@ namespace RPG
         }
 
         public bool IsLocked { get; private set; }
+        public bool IsVisible => SprRenderer.enabled;
 
         Transform objectToFollow;
 
