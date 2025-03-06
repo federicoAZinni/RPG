@@ -526,8 +526,9 @@ MonoBehaviour:
   onVisionToChase: 0
   rangeToAttack: 2
   timeWaitBeforeAttack: 5
+  attackDamage: 5
   onRangeToAttack: 0
-  possibleTargets: []
+  maxHP: 25
 --- !u!95 &5839162829130020811
 Animator:
   serializedVersion: 7

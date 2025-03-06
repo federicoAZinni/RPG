@@ -29,7 +29,6 @@ namespace RPG.Player
 
         public void ToggleModule(bool toggle) => moduleEnabled = toggle;
 
-
         void OnDestroy()
         {
             inputListener.OnAttack -= OnAttack;
@@ -61,6 +60,7 @@ namespace RPG.Player
                 IDamageable possibleTarget = possibleTargets[i].GetComponent<IDamageable>();
                 if (possibleTarget == null || possibleTarget.HP <= 0) continue;
                 currentTarget = possibleTarget;
+                currentTarget.OnTargetDies += OnTargetDies;
                 return true;
             }
 
@@ -70,6 +70,12 @@ namespace RPG.Player
         void ThrowPower(PowerTypes type)
         {
             Debug.LogFormat("Throwing power {0}", type);
+        }
+
+        void OnTargetDies()
+        {
+            currentTarget.OnTargetDies -= OnTargetDies;
+            currentTarget = null;
         }
     }
 }
