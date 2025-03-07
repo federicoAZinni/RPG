@@ -13,6 +13,7 @@ namespace RPG.AI
 
         //Lista de cosas:
         //Hacer que si un enemigo se pone en alerta, se pongan en aletar los enemigos cercanos.
+        //Manejar Agro
 
         //Dependencias
         [SerializeField] Transform player_T;
@@ -70,20 +71,45 @@ namespace RPG.AI
             yield return new WaitForSeconds(0.1f);// cambiar esto
             player_T = GameObject.FindGameObjectWithTag("Player").transform;// cambiar esto
 
+
             InitStates();
+            StartCoroutine(SearchPlayer());
             ChangeState(State.Idle);
         }
 
 
         private void Update()
         {
-            if (player_T == null) return;// cambiar esto
+
+            if (player_T == null)return;// cambiar esto
+            
+
             onVisionToAlert = OnVision(visionDistanceToAlert); //Detecta si el player se enceuntra dentro del cono de vision de alerta
             onVisionToChase = OnVision(visionDistanceToChase); //Detecta si el player se enceuntra dentro del cono de vision de perseguir
             onRangeToAttack = OnVision(rangeToAttack);
 
 
-            
+        }
+
+        IEnumerator SearchPlayer()
+        {
+            while (player_T==null)
+            {
+                Collider[] cols = Physics.OverlapSphere(transform.position, visionDistanceToAlert * 2);
+                foreach (Collider col in cols)
+                {
+                    if (col.CompareTag("Player"))
+                    {
+                        player_T = col.transform;
+                    }
+                    else
+                    {
+                        player_T = null;
+                    }
+                }
+                yield return new WaitForSeconds(0.3f);
+            }
+
 
         }
 
