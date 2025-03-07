@@ -12,6 +12,8 @@ namespace RPG.Player
         bool moduleEnabled;
         PlayerController pController;
 
+        public event System.Action OnTargetDies;
+
         public void Init(PlayerController controller)
         {
             pController = controller;
@@ -40,6 +42,7 @@ namespace RPG.Player
 
         void OnDeath()
         {
+            OnTargetDies?.Invoke();
             pController.OnPlayerCharacterDies();
             print("The player died!");
         }

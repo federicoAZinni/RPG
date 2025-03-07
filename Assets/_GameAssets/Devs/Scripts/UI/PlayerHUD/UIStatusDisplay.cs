@@ -9,14 +9,21 @@ namespace RPG.UI.HUD
         [SerializeField] Image imgFill;
         [SerializeField] TMP_Text lblDebug;
 
-        float maxStatusValue;
+        float maxStatusValue, targetValue, lerpSpeed;
 
-        public void SetMaxStatusValue(float ammount) => maxStatusValue = ammount;
+        void Update()
+        {
+            if (imgFill.fillAmount - targetValue < Mathf.Epsilon) return;
+            imgFill.fillAmount = Mathf.Lerp(imgFill.fillAmount, targetValue, Time.deltaTime * lerpSpeed);
+        }
+
+        public void SetMaxStatusValue(float ammount) => targetValue = maxStatusValue = ammount;
 
         public void UpdateStatus(float status)
         {
             if (maxStatusValue == 0) return;
-            imgFill.fillAmount = status / maxStatusValue;
+            targetValue = status / maxStatusValue;
+            lerpSpeed = 1 + (targetValue - imgFill.fillAmount);
             lblDebug.text = status.ToString();
         }
     }

@@ -10,20 +10,26 @@ namespace RPG.AI
     {
         private AIEnemyController aiEnemyController;
         private float rangeToAttack;
-        private float timeWaitBeforeAttack;
+        private float timeWaitBeforeAttack, attackDamage;
         private Animator anim;
 
-        public AttackAIEnemy_State(AIEnemyController aiEnemyController, Animator anim,float rangeToAttack, float timeWaitBeforeAttack)
+        private IDamageable target;
+
+        public AttackAIEnemy_State(AIEnemyController aiEnemyController, Animator anim,float rangeToAttack, float timeWaitBeforeAttack, float attackDamage)
         {
             this.aiEnemyController = aiEnemyController;
             this.rangeToAttack = rangeToAttack;
             this.timeWaitBeforeAttack = timeWaitBeforeAttack;
             this.anim = anim;
+            this.attackDamage = attackDamage;
         }
 
         public async void OnStart()
         {
             Debug.Log($"OnStart, State : {this.GetType().Name}");
+
+            target = aiEnemyController.GetCurrentTargetTransform().GetComponent<IDamageable>();
+            if (target != null || target.HP > 0) target.OnTargetDies += OnTargetDies;
 
             var tokenSource = new CancellationTokenSource();
             CancellationToken ct = tokenSource.Token;
@@ -46,6 +52,7 @@ namespace RPG.AI
                 {
                     time = 0;
                     anim.SetTrigger("Attack");
+                    if (target != null) target.Damage(attackDamage);
                     Debug.Log("Attack");
                 }
 
@@ -55,6 +62,13 @@ namespace RPG.AI
             }
 
             aiEnemyController.ChangeState(State.Chase);
+        }
+
+        void OnTargetDies()
+        {
+            // In case the Object isn't destroyed, remove event reference to avoid duplicates
+            target.OnTargetDies -= OnTargetDies;
+            // TODO Stop searching for that target
         }
 
         public Color ColorGUI()

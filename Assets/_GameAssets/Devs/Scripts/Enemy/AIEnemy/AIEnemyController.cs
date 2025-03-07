@@ -8,12 +8,11 @@ using UnityEngine.UIElements;
 
 namespace RPG.AI
 {
-    public class AIEnemyController : MonoBehaviour
+    public class AIEnemyController : MonoBehaviour, IDamageable
     {
 
         //Lista de cosas:
         //Hacer que si un enemigo se pone en alerta, se pongan en aletar los enemigos cercanos.
-        //Manejar Agro
 
         //Dependencias
         [SerializeField] Transform player_T;
@@ -48,10 +47,17 @@ namespace RPG.AI
         [Header("Attack Refs")]
         [SerializeField] float rangeToAttack;
         [SerializeField] float timeWaitBeforeAttack;
+        [SerializeField] float attackDamage;
 
         public bool onRangeToAttack;
 
+        [Space(5)]
+        [Header("Health Refs")]
+        [SerializeField] float maxHP;
 
+        public float HP { get; private set; }
+
+        public event Action OnTargetDies;
         public static Action OnExitPlayMode;
 
         private void InitStates() //Inicializamos cada estado con las dependencias que tengan.
@@ -60,7 +66,7 @@ namespace RPG.AI
             idleState = new IdleAIEnemy_State(transform.position,this,agent, meshFilter.mesh);
             alertState = new AlertAIEnemy_State(player_T,transform,this, timeWaitBeforeChase);
             chaseState = new ChaseAIEnemy_State(player_T,agent,this);
-            attackState = new AttackAIEnemy_State(this, anim,rangeToAttack, timeWaitBeforeAttack);
+            attackState = new AttackAIEnemy_State(this, anim,rangeToAttack, timeWaitBeforeAttack, attackDamage);
            
         }
 
@@ -71,46 +77,17 @@ namespace RPG.AI
             yield return new WaitForSeconds(0.1f);// cambiar esto
             player_T = GameObject.FindGameObjectWithTag("Player").transform;// cambiar esto
 
-
             InitStates();
-            StartCoroutine(SearchPlayer());
             ChangeState(State.Idle);
         }
 
 
         private void Update()
         {
-
-            if (player_T == null)return;// cambiar esto
-            
-
+            if (player_T == null) return;// cambiar esto
             onVisionToAlert = OnVision(visionDistanceToAlert); //Detecta si el player se enceuntra dentro del cono de vision de alerta
             onVisionToChase = OnVision(visionDistanceToChase); //Detecta si el player se enceuntra dentro del cono de vision de perseguir
             onRangeToAttack = OnVision(rangeToAttack);
-
-
-        }
-
-        IEnumerator SearchPlayer()
-        {
-            while (player_T==null)
-            {
-                Collider[] cols = Physics.OverlapSphere(transform.position, visionDistanceToAlert * 2);
-                foreach (Collider col in cols)
-                {
-                    if (col.CompareTag("Player"))
-                    {
-                        player_T = col.transform;
-                    }
-                    else
-                    {
-                        player_T = null;
-                    }
-                }
-                yield return new WaitForSeconds(0.3f);
-            }
-
-
         }
 
 
@@ -179,7 +156,30 @@ namespace RPG.AI
             return false;
         }
 
+        public Transform GetCurrentTargetTransform() => player_T;
 
+        #region IDamageable
+
+        public void Damage(float ammount)
+        {
+            HP = Mathf.Clamp(HP - ammount, 0, maxHP);
+            if (HP == 0) OnDeath();
+        }
+
+        public void OnDeath()
+        {
+            // TODO Handle Enemy death
+
+            Destroy(gameObject);
+            OnExitPlayMode?.Invoke();
+            OnTargetDies?.Invoke();
+        }
+
+        public void GiveHP(float ammount) => HP = Mathf.Clamp(HP + ammount, 0, maxHP);
+
+        public Vector3 GetPosition() => transform.position;
+
+        #endregion
 
         private void OnDrawGizmos() //Crea una esfera y cambia el color dependiendo el estado en que se encuentre.
         {
