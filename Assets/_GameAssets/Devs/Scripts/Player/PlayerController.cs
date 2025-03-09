@@ -43,7 +43,7 @@ namespace RPG.Player
         void Start()
         {
             playerObject = Instantiate(playerPrefab, playerSpawnPoint.position, playerSpawnPoint.rotation);
-            stateCamera.LookAt = playerObject.transform;
+            stateCamera.Follow = stateCamera.LookAt = playerObject.transform;
 
             lastMousePosition = Vector2.negativeInfinity;
             lastCursorWorlPos = Vector3.negativeInfinity;
