@@ -37,16 +37,16 @@ namespace RPG.Player
         {
             if (!moduleEnabled) return;
             float currentMovementSpeed = baseMovementSpeed * Time.deltaTime;
-            if (inputListener.MoveValue.x != 0 && inputListener.MoveValue.y != 0) currentMovementSpeed *= .5f;
+            //if (inputListener.MoveValue.x != 0 && inputListener.MoveValue.y != 0 && inputListener.MoveValue.x == inputListener.MoveValue.y) currentMovementSpeed *= .5f;
 
             Vector3 dir = transform.TransformDirection(new Vector3(inputListener.MoveValue.x, 0, inputListener.MoveValue.y));
             CharCtrl.Move(currentMovementSpeed * Time.deltaTime * dir);
 
-            if (!cursor.IsLocked) cursor.transform.position += Time.deltaTime * dir * currentMovementSpeed;
+            if (!cursor.IsLocked) cursor.transform.position += currentMovementSpeed * Time.deltaTime * dir;
 
             //if (!pController.GetCursorWorldPos(out Vector3 cursorPos)) return;
             Vector3 dirVector = pController.GetCursor().transform.position - transform.position;
-            transform.forward = new Vector3(dirVector.x, 0, dirVector.z);
+            transform.rotation = Quaternion.LookRotation(new Vector3(dirVector.x, 0, dirVector.z), Vector3.up);
         }
     }
 }
