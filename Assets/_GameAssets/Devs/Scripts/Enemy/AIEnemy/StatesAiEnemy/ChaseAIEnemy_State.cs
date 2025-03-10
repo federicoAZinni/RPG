@@ -20,18 +20,45 @@ namespace RPG.AI
 
         }
 
+        public async void OnStart()
+        {
+            Debug.Log($"OnStart, State : {this.GetType().Name}");
+            var tokenSource = new CancellationTokenSource();
+            CancellationToken ct = tokenSource.Token;
+
+            AIEnemyController.OnExitPlayMode += () => { tokenSource.Cancel(); };
+
+            await Action(ct);
+        }
+
+
         public async Task Action(CancellationToken cancellationToken)
         {
             while (aiEnemyController.onVisionToAlert) 
             {
                 if (cancellationToken.IsCancellationRequested) //Necesario para frenar la Task despues de salir del playmode, sin esto, sigue corriendo hasta darle play devuelta
-                    cancellationToken.ThrowIfCancellationRequested();
+                    return; /*cancellationToken.ThrowIfCancellationRequested();*/
 
                 agent.SetDestination(target_T.position);
 
                 if(aiEnemyController.onRangeToAttack)
                 {
-                    aiEnemyController.ChangeState(State.Attack);
+                    //aiEnemyController.ChangeState(State.Attack);
+
+                    int probabilityToAttack = 10;
+
+                    if(probabilityToAttack<= Random.Range(0,100))
+                    {
+                        aiEnemyController.ChangeState(State.Attack);
+                    }
+                    else
+                    {
+                        //Random.onUnitSphere;
+
+                         
+                    }
+
+
                     return;
                 }
 
@@ -49,15 +76,6 @@ namespace RPG.AI
             
         }
 
-        public async void OnStart()
-        {
-            Debug.Log($"OnStart, State : {this.GetType().Name}");
-            var tokenSource = new CancellationTokenSource();
-            CancellationToken ct = tokenSource.Token;
-
-            AIEnemyController.OnExitPlayMode += () => { tokenSource.Cancel(); };
-
-            await Action(ct);
-        }
+    
     }
 }

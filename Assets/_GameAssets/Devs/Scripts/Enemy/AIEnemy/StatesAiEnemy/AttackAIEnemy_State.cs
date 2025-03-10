@@ -8,12 +8,16 @@ namespace RPG.AI
 {
     public class AttackAIEnemy_State : IStateEnemyAI
     {
+
+        
+
         private AIEnemyController aiEnemyController;
         private float rangeToAttack;
         private float timeWaitBeforeAttack, attackDamage;
         private Animator anim;
 
         private IDamageable target;
+        float coolDownAttack;
 
         public AttackAIEnemy_State(AIEnemyController aiEnemyController, Animator anim,float rangeToAttack, float timeWaitBeforeAttack, float attackDamage)
         {
@@ -41,22 +45,22 @@ namespace RPG.AI
 
         public async Task Action(CancellationToken cancellationToken)
         {
-            float time = timeWaitBeforeAttack;
+            if(coolDownAttack==0) coolDownAttack = timeWaitBeforeAttack;
 
             while (aiEnemyController.onRangeToAttack)
             {
                 if (cancellationToken.IsCancellationRequested) //Necesario para frenar la Task despues de salir del playmode, sin esto, sigue corriendo hasta darle play devuelta
-                    cancellationToken.ThrowIfCancellationRequested();
+                    return; /*cancellationToken.ThrowIfCancellationRequested();*/
 
-                if(timeWaitBeforeAttack < time)
+                if(timeWaitBeforeAttack < coolDownAttack)
                 {
-                    time = 0;
+                    coolDownAttack = 0;
                     anim.SetTrigger("Attack");
                     if (target != null) target.Damage(attackDamage);
                     Debug.Log("Attack");
                 }
 
-                time += Time.deltaTime;
+                coolDownAttack += Time.deltaTime;
 
                 await Task.Yield();
             }

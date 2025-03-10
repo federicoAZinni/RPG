@@ -16,6 +16,7 @@ namespace RPG.AI
 
         //Dependencias
         [SerializeField] Transform player_T;
+        public Transform Player_T { get => player_T; set => player_T = value; }
         [SerializeField] NavMeshAgent agent;
         [SerializeField] MeshFilter meshFilter;
         [SerializeField] Animator anim;
@@ -56,39 +57,41 @@ namespace RPG.AI
         [SerializeField] float maxHP;
 
         public float HP { get; private set; }
+       
 
+        //Events
         public event Action OnTargetDies;
         public static Action OnExitPlayMode;
 
         private void InitStates() //Inicializamos cada estado con las dependencias que tengan.
                                   //IMPORTANTE!! SI agregamos un estado nuevo, hay que agregarlo en la funcion GetStateByEnum
         {
-            idleState = new IdleAIEnemy_State(transform.position,this,agent, meshFilter.mesh);
-            alertState = new AlertAIEnemy_State(player_T,transform,this, timeWaitBeforeChase);
-            chaseState = new ChaseAIEnemy_State(player_T,agent,this);
+            idleState = new IdleAIEnemy_State(this,visionDistanceToAlert,agent, meshFilter.mesh);
+            alertState = new AlertAIEnemy_State(Player_T,transform,agent,this,timeWaitBeforeChase);
+            chaseState = new ChaseAIEnemy_State(Player_T,agent,this);
             attackState = new AttackAIEnemy_State(this, anim,rangeToAttack, timeWaitBeforeAttack, attackDamage);
            
         }
 
 
 
-        private IEnumerator Start()
-        {
-            yield return new WaitForSeconds(0.1f);// cambiar esto
-            player_T = GameObject.FindGameObjectWithTag("Player").transform;// cambiar esto
+        //private IEnumerator Start()
+        //{
+        //    yield return new WaitForSeconds(0.1f);// cambiar esto
+        //    player_T = GameObject.FindGameObjectWithTag("Player").transform;// cambiar esto
 
-            InitStates();
-            ChangeState(State.Idle);
-        }
+        //    InitStates();
+        //    ChangeState(State.Idle);
+        //}
 
 
-        private void Update()
-        {
-            if (player_T == null) return;// cambiar esto
-            onVisionToAlert = OnVision(visionDistanceToAlert); //Detecta si el player se enceuntra dentro del cono de vision de alerta
-            onVisionToChase = OnVision(visionDistanceToChase); //Detecta si el player se enceuntra dentro del cono de vision de perseguir
-            onRangeToAttack = OnVision(rangeToAttack);
-        }
+        //private void Update()
+        //{
+        //    if (player_T == null) return;// cambiar esto
+        //    onVisionToAlert = OnVision(visionDistanceToAlert); //Detecta si el player se enceuntra dentro del cono de vision de alerta
+        //    onVisionToChase = OnVision(visionDistanceToChase); //Detecta si el player se enceuntra dentro del cono de vision de perseguir
+        //    onRangeToAttack = OnVision(rangeToAttack);
+        //}
 
 
         public void ChangeState(State _newState) //Cambia el estado y guarda el ultimo en el que estuvo.
@@ -137,16 +140,16 @@ namespace RPG.AI
             return null;
         }
 
-        bool OnVision(float distance)
+        public bool OnVision(float distance)
         {
-            Vector3 dir = (player_T.position - transform.position).normalized;
+            Vector3 dir = (Player_T.position - transform.position).normalized;
 
 
             if (Physics.Raycast(transform.position, dir, out RaycastHit hit))// si hay una pared o algo que no lo deje ver, devuelve false
                 if (!hit.transform.CompareTag("Player")) return false;
 
 
-            if (Vector3.Distance(player_T.position, transform.position) < distance)//Cono de vision.
+            if (Vector3.Distance(Player_T.position, transform.position) < distance)//Cono de vision.
             {
                 float dot = Vector3.Dot(transform.forward, dir);
                 if (dot > -visionOpening)
@@ -156,7 +159,7 @@ namespace RPG.AI
             return false;
         }
 
-        public Transform GetCurrentTargetTransform() => player_T;
+        public Transform GetCurrentTargetTransform() => Player_T;
 
         #region IDamageable
 
@@ -192,6 +195,15 @@ namespace RPG.AI
         {
             OnExitPlayMode?.Invoke();
         }
+
+
+
+
+        #region test
+       
+       
+
+        #endregion
 
     }
 

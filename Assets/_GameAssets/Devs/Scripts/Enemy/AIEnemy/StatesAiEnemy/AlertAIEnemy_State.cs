@@ -3,6 +3,7 @@ using UnityEngine;
 using System.Threading.Tasks;
 using System;
 using System.Threading;
+using UnityEngine.AI;
 
 namespace RPG.AI
 {
@@ -13,17 +14,19 @@ namespace RPG.AI
         Transform myTransform;
         Transform player_T;
         Vector3 lastPosPlayerWatched;
+        NavMeshAgent agent;
 
         Collider[] possibleTargets;
 
         float timeWaitBeforeChase;
 
-        public AlertAIEnemy_State(Transform player_T, Transform myTransform, AIEnemyController aiEnemyController, float timeWaitBeforeChase)
+        public AlertAIEnemy_State(Transform player_T, Transform myTransform, NavMeshAgent agent, AIEnemyController aiEnemyController, float timeWaitBeforeChase)
         {
             this.player_T = player_T;
             this.myTransform = myTransform;
             this.aiEnemyController = aiEnemyController;
             this.timeWaitBeforeChase = timeWaitBeforeChase;
+            this.agent = agent;
         }
 
         public async void OnStart()
@@ -56,6 +59,7 @@ namespace RPG.AI
         public void OnFinish()
         {
             Debug.Log($"OnFinish, State : {this.GetType().Name}");
+            agent.speed = agent.speed * 3;//Cambiar esto
         }
 
         public Color ColorGUI() => Color.yellow;
@@ -64,14 +68,19 @@ namespace RPG.AI
         {
             float timeOnVision = 0;
 
+            agent.speed = agent.speed / 3;//Cambiar esto
+            agent.SetDestination(lastPosPlayerWatched);
+
             while (timeOnVision < timeWaitBeforeChase)
             {
                 if (cancellationToken.IsCancellationRequested) //Necesario para frenar la Task despues de salir del playmode, sin esto, sigue corriendo hasta darle play devuelta
-                    cancellationToken.ThrowIfCancellationRequested();
+                    return; /*cancellationToken.ThrowIfCancellationRequested();*/
 
-                Vector3 relativePos = player_T.position - myTransform.position;
-                Quaternion posWithOutY = Quaternion.LookRotation(relativePos, Vector3.up);
-                myTransform.rotation = Quaternion.Lerp(myTransform.rotation, posWithOutY, timeOnVision);
+                //Vector3 relativePos = lastPosPlayerWatched - myTransform.position;
+                //Quaternion posWithOutY = Quaternion.LookRotation(relativePos, Vector3.up);
+                //posWithOutY.y= 0;
+                //myTransform.rotation = Quaternion.Lerp(myTransform.rotation, posWithOutY, timeOnVision);
+
 
                 timeOnVision += Time.deltaTime;
 

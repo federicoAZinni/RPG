@@ -12,17 +12,19 @@ namespace RPG.AI
         Vector3 startPosRef;
         NavMeshAgent agent;
         Mesh mesh;
+        float visionDistanceToAlert;
 
-        float areaRadius = 5;// Area que va a usar para crear random target asi se mueve cada cierto tiempo.
+        //Random Pos
+        float areaRadius = 5;
         float timeToMoveToRandomPos;
         Vector3 posRandom;
 
-        public IdleAIEnemy_State(Vector3 startPosRef, AIEnemyController aiEnemyController,NavMeshAgent agent, Mesh mesh)
+        public IdleAIEnemy_State(AIEnemyController aiEnemyController, float visionDistanceToAlert, NavMeshAgent agent, Mesh mesh)
         {
-            this.startPosRef = startPosRef;
             this.aiEnemyController = aiEnemyController;
             this.agent = agent;
             this.mesh = mesh;
+            this.visionDistanceToAlert = visionDistanceToAlert;
         }
 
         public async void OnStart()
@@ -31,6 +33,8 @@ namespace RPG.AI
 
             var tokenSource = new CancellationTokenSource();
             CancellationToken ct = tokenSource.Token;
+
+            startPosRef = aiEnemyController.GetPosition();
 
             AIEnemyController.OnExitPlayMode += () => { tokenSource.Cancel(); };
 
@@ -51,22 +55,14 @@ namespace RPG.AI
         {
             float time = 0;
 
-            while (!aiEnemyController.onVisionToAlert ) 
+            while (!aiEnemyController.OnVision(visionDistanceToAlert))
             {
                 if (cancellationToken.IsCancellationRequested) //Necesario para frenar la Task despues de salir del playmode, sin esto, sigue corriendo hasta darle play devuelta
-                    cancellationToken.ThrowIfCancellationRequested();
-                
-                    
+                    return;//cancellationToken.ThrowIfCancellationRequested();
 
-                if(timeToMoveToRandomPos < time)//Esto hace que cada random tiempo cree una posicion nueva para que se mueva.
-                {
-                    timeToMoveToRandomPos = Random.Range(10, 20);
-                    time = 0;
-                    posRandom = GetPosAvailablePosInArea(mesh);
-                    agent.SetDestination(posRandom);
-                }
+                SearchPlayer();
 
-                time += Time.deltaTime;
+                time = MoveInRandomPosOnArea(time);
 
                 await Task.Yield();
 
@@ -74,6 +70,33 @@ namespace RPG.AI
 
             aiEnemyController.ChangeState(State.Alert);
 
+        }
+
+        private float MoveInRandomPosOnArea(float time)
+        {
+            if (timeToMoveToRandomPos < time)//Esto hace que cada random tiempo cree una posicion nueva para que se mueva.
+            {
+                timeToMoveToRandomPos = Random.Range(10, 20);
+                time = 0;
+                posRandom = GetPosAvailablePosInArea(mesh);
+                agent.SetDestination(posRandom);
+            }
+
+            time += Time.deltaTime;
+            return time;
+        }
+
+        public void SearchPlayer()
+        {
+            Collider[] possibleTargets = Physics.OverlapSphere(aiEnemyController.GetPosition(), 20, LayerMask.GetMask("Characters"));
+
+            for (int i = 0; i < possibleTargets.Length; i++)
+            {
+                if (possibleTargets[i].CompareTag("Player"))
+                {
+                    aiEnemyController.Player_T = possibleTargets[i].transform;
+                }
+            }
         }
 
         Vector3 GetPosAvailablePosInArea(Mesh meshPrefab)
@@ -88,6 +111,7 @@ namespace RPG.AI
                 {
                     if (hit.transform.CompareTag("Ground"))
                         return new Vector3(randomPosInSphere.x, hit.point.y + yHeight, randomPosInSphere.z);
+                    else Debug.LogError("Hit on object without tag Ground");
                 }
             }
 
