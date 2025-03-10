@@ -2,19 +2,32 @@ using UnityEngine;
 
 namespace RPG.Player
 {
+    [RequireComponent(typeof(CharacterController))]
     public class PlayerMovement : MonoBehaviour, IPlayerModule
     {
         [SerializeField] float baseMovementSpeed;
         [SerializeField] float rotationSpeed;
 
+        CharacterController _charctrl;
+        CharacterController CharCtrl
+        {
+            get
+            {
+                if (_charctrl == null) _charctrl = GetComponent<CharacterController>();
+                return _charctrl;
+            }
+        }
+
         bool moduleEnabled;
         PlayerInputListener inputListener;
         PlayerController pController;
+        SelectionCursor cursor;
 
         public void Init(PlayerController controller)
         {
             pController = controller;
             inputListener = pController.GetInputListener();
+            cursor = pController.GetCursor();
         }
 
         public void ToggleModule(bool toggle) => moduleEnabled = toggle;
@@ -24,14 +37,16 @@ namespace RPG.Player
         {
             if (!moduleEnabled) return;
             float currentMovementSpeed = baseMovementSpeed * Time.deltaTime;
-            if (inputListener.MoveValue.x != 0 && inputListener.MoveValue.y != 0) currentMovementSpeed *= .5f;
+            //if (inputListener.MoveValue.x != 0 && inputListener.MoveValue.y != 0 && inputListener.MoveValue.x == inputListener.MoveValue.y) currentMovementSpeed *= .5f;
 
-            transform.position += currentMovementSpeed * inputListener.MoveValue.y * Vector3.forward;
-            transform.position += currentMovementSpeed * inputListener.MoveValue.x * Vector3.right;
+            Vector3 dir = transform.TransformDirection(new Vector3(inputListener.MoveValue.x, 0, inputListener.MoveValue.y));
+            CharCtrl.Move(currentMovementSpeed * Time.deltaTime * dir);
+
+            if (!cursor.IsLocked) cursor.transform.position += currentMovementSpeed * Time.deltaTime * dir;
 
             //if (!pController.GetCursorWorldPos(out Vector3 cursorPos)) return;
             Vector3 dirVector = pController.GetCursor().transform.position - transform.position;
-            transform.forward = new Vector3(dirVector.x, 0, dirVector.z);
+            transform.rotation = Quaternion.LookRotation(new Vector3(dirVector.x, 0, dirVector.z), Vector3.up);
         }
     }
 }
