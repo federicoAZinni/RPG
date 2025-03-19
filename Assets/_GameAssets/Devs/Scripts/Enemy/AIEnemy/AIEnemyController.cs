@@ -19,7 +19,7 @@ namespace RPG.AI
         [SerializeField] Transform target;
         public Transform Target { get => target; set => target = value; }
         [SerializeField] NavMeshAgent agent;
-        [SerializeField] MeshFilter meshFilter;
+        [SerializeField] SkinnedMeshRenderer meshFilter;
         [SerializeField] Animator anim;
 
         //All AIState Refes
@@ -64,13 +64,15 @@ namespace RPG.AI
         
         
         public Transform GetCurrentTargetTransform() => Target;
+        public Vector3 GetPosition() => transform.position;
+        public void SetTarget(Transform _target) => Target = _target;
 
-       
+
         #region Init
         private void InitStates() //Inicializamos cada estado con las dependencias que tengan.
                                   //IMPORTANTE!! SI agregamos un estado nuevo, hay que agregarlo en la funcion GetStateByEnum
         {
-            idleState = new IdleAIEnemy_State(this,transform,agent, meshFilter.mesh, rangeToSearchPlayer);
+            idleState = new IdleAIEnemy_State(this,transform,agent, meshFilter.sharedMesh, rangeToSearchPlayer);
             alertState = new AlertAIEnemy_State(this,transform,agent,timeWaitBeforeChase);
             chaseState = new ChaseAIEnemy_State(this,transform,agent, visionDistanceToChase, rangeToAttack, visionOpening);
             attackState = new AttackAIEnemy_State(this, anim, rangeToAttack, timeWaitBeforeAttack, attackDamage,visionOpening);
@@ -184,23 +186,25 @@ namespace RPG.AI
         public void OnDeath()
         {
             // TODO Handle Enemy death
-
-            Destroy(gameObject);
-            OnExitPlayMode?.Invoke();
-            OnTargetDies?.Invoke();
+            anim.SetTrigger("Die");
+            LeanTween.delayedCall(1,() => {
+                Destroy(gameObject);
+                OnExitPlayMode?.Invoke();
+                OnTargetDies?.Invoke();
+            });
+            
         }
 
         public void GiveHP(float ammount) => HP = Mathf.Clamp(HP + ammount, 0, maxHP);
-
-        public Vector3 GetPosition() => transform.position;
-
-        public void SetTarget(Transform _target) => Target = _target;
 
         #endregion
 
 
 
-
+        private void Update() 
+        {
+            anim.SetFloat("Speed", agent.velocity.magnitude);//DOTO: Change this.
+        }
 
 
         private void OnDrawGizmos() //Crea una esfera y cambia el color dependiendo el estado en que se encuentre.
