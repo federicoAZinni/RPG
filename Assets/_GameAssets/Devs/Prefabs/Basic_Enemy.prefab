@@ -494,7 +494,7 @@ NavMeshAgent:
   m_Acceleration: 8
   avoidancePriority: 50
   m_AngularSpeed: 120
-  m_StoppingDistance: 2
+  m_StoppingDistance: 5
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
   m_AutoRepath: 1
@@ -514,13 +514,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 168750e5c7586a340a82796bf56c4c89, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  player_T: {fileID: 0}
+  target: {fileID: 0}
   agent: {fileID: 5737107603724966820}
   meshFilter: {fileID: 5674279149266942613}
   anim: {fileID: 5839162829130020811}
   visionOpening: 0.7
   visionDistanceToAlert: 10
-  visionDistanceToChase: 5
+  visionDistanceToChase: 7
   timeWaitBeforeChase: 1
   onVisionToAlert: 0
   onVisionToChase: 0

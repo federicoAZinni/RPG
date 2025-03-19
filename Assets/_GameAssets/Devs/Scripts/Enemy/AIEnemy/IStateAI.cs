@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace RPG.AI
 {
-    public interface IStateEnemyAI
+    public interface IStateAI
     {
         public void OnStart();
         public void OnFinish();

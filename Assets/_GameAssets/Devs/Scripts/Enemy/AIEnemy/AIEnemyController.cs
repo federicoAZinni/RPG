@@ -8,15 +8,16 @@ using UnityEngine.UIElements;
 
 namespace RPG.AI
 {
-    public class AIEnemyController : MonoBehaviour, IDamageable
+    public class AIEnemyController : MonoBehaviour, IDamageable, IStateMachine
     {
 
         //Lista de cosas:
         //Hacer que si un enemigo se pone en alerta, se pongan en aletar los enemigos cercanos.
 
         //Dependencias
-        [SerializeField] Transform player_T;
-        public Transform Player_T { get => player_T; set => player_T = value; }
+        [SerializeField] float rangeToSearchPlayer;
+        [SerializeField] Transform target;
+        public Transform Target { get => target; set => target = value; }
         [SerializeField] NavMeshAgent agent;
         [SerializeField] MeshFilter meshFilter;
         [SerializeField] Animator anim;
@@ -28,8 +29,8 @@ namespace RPG.AI
         ChaseAIEnemy_State chaseState;
 
         //
-        IStateEnemyAI lastState;
-        IStateEnemyAI currentState;
+        IStateAI lastState;
+        IStateAI currentState;
 
 
         [Space(5)]
@@ -40,8 +41,6 @@ namespace RPG.AI
         [SerializeField] float visionDistanceToChase;
         [SerializeField] float timeWaitBeforeChase;
 
-        public bool onVisionToAlert;
-        public bool onVisionToChase;
         
 
         [Space(5)]
@@ -50,7 +49,6 @@ namespace RPG.AI
         [SerializeField] float timeWaitBeforeAttack;
         [SerializeField] float attackDamage;
 
-        public bool onRangeToAttack;
 
         [Space(5)]
         [Header("Health Refs")]
@@ -62,41 +60,36 @@ namespace RPG.AI
         //Events
         public event Action OnTargetDies;
         public static Action OnExitPlayMode;
+        
+        
+        
+        public Transform GetCurrentTargetTransform() => Target;
 
+       
+        #region Init
         private void InitStates() //Inicializamos cada estado con las dependencias que tengan.
                                   //IMPORTANTE!! SI agregamos un estado nuevo, hay que agregarlo en la funcion GetStateByEnum
         {
-            idleState = new IdleAIEnemy_State(this,visionDistanceToAlert,agent, meshFilter.mesh);
-            alertState = new AlertAIEnemy_State(Player_T,transform,agent,this,timeWaitBeforeChase);
-            chaseState = new ChaseAIEnemy_State(Player_T,agent,this);
-            attackState = new AttackAIEnemy_State(this, anim,rangeToAttack, timeWaitBeforeAttack, attackDamage);
+            idleState = new IdleAIEnemy_State(this,transform,agent, meshFilter.mesh, rangeToSearchPlayer);
+            alertState = new AlertAIEnemy_State(this,transform,agent,timeWaitBeforeChase);
+            chaseState = new ChaseAIEnemy_State(this,transform,agent, visionDistanceToChase, rangeToAttack, visionOpening);
+            attackState = new AttackAIEnemy_State(this, anim, rangeToAttack, timeWaitBeforeAttack, attackDamage,visionOpening);
            
         }
 
+        private void Start()
+        {
+            InitStates();
+            ChangeState(State.Idle);
+        }
 
+        #endregion
 
-        //private IEnumerator Start()
-        //{
-        //    yield return new WaitForSeconds(0.1f);// cambiar esto
-        //    player_T = GameObject.FindGameObjectWithTag("Player").transform;// cambiar esto
-
-        //    InitStates();
-        //    ChangeState(State.Idle);
-        //}
-
-
-        //private void Update()
-        //{
-        //    if (player_T == null) return;// cambiar esto
-        //    onVisionToAlert = OnVision(visionDistanceToAlert); //Detecta si el player se enceuntra dentro del cono de vision de alerta
-        //    onVisionToChase = OnVision(visionDistanceToChase); //Detecta si el player se enceuntra dentro del cono de vision de perseguir
-        //    onRangeToAttack = OnVision(rangeToAttack);
-        //}
-
+        #region StateMachine
 
         public void ChangeState(State _newState) //Cambia el estado y guarda el ultimo en el que estuvo.
         {
-            IStateEnemyAI newState = GetStateByEnum(_newState); //Se obtiene la instancia del estado que corresponda segun el enum del parametro
+            IStateAI newState = GetStateByEnum(_newState); //Se obtiene la instancia del estado que corresponda segun el enum del parametro
 
             if (currentState == newState) return;
 
@@ -114,7 +107,7 @@ namespace RPG.AI
 
         public void ChangeToLastState()
         {
-            IStateEnemyAI temp = currentState;
+            IStateAI temp = currentState;
             currentState?.OnFinish();
             currentState = lastState;
             lastState = temp;
@@ -122,7 +115,7 @@ namespace RPG.AI
         }
 
 
-        IStateEnemyAI GetStateByEnum(State state)
+        IStateAI GetStateByEnum(State state)
         {
             switch (state)
             {
@@ -140,26 +133,45 @@ namespace RPG.AI
             return null;
         }
 
-        public bool OnVision(float distance)
-        {
-            Vector3 dir = (Player_T.position - transform.position).normalized;
+        #endregion
 
+        #region OnVision And Range States
+        public bool OnVisionAndRange(OnVisionAndRangeState rangeState)
+        {
+            float distance = 0;
+
+            switch (rangeState)
+            {
+                case OnVisionAndRangeState.AlertRange:
+                    distance = visionDistanceToAlert;
+                    break;
+                case OnVisionAndRangeState.ChaseRange:
+                    distance = visionDistanceToChase;
+                    break;
+                case OnVisionAndRangeState.AttackRange:
+                    distance = rangeToAttack;
+                    break;
+                default:
+                    distance = 0;
+                    break;
+            }
+
+
+            Vector3 dir = (target.position - transform.position).normalized;
 
             if (Physics.Raycast(transform.position, dir, out RaycastHit hit))// si hay una pared o algo que no lo deje ver, devuelve false
                 if (!hit.transform.CompareTag("Player")) return false;
 
-
-            if (Vector3.Distance(Player_T.position, transform.position) < distance)//Cono de vision.
+            if (Vector3.Distance(target.position, transform.position) < distance)//Cono de vision.
             {
                 float dot = Vector3.Dot(transform.forward, dir);
                 if (dot > -visionOpening)
                     return true;
-                    
+
             }
             return false;
         }
-
-        public Transform GetCurrentTargetTransform() => Player_T;
+        #endregion
 
         #region IDamageable
 
@@ -182,7 +194,14 @@ namespace RPG.AI
 
         public Vector3 GetPosition() => transform.position;
 
+        public void SetTarget(Transform _target) => Target = _target;
+
         #endregion
+
+
+
+
+
 
         private void OnDrawGizmos() //Crea una esfera y cambia el color dependiendo el estado en que se encuentre.
         {
@@ -196,21 +215,18 @@ namespace RPG.AI
             OnExitPlayMode?.Invoke();
         }
 
-
-
-
-        #region test
-       
-       
-
-        #endregion
-
     }
+
+
+
 
     public enum State
     {
         Idle,Alert,Chase,Attack
     }
-
+    public enum OnVisionAndRangeState
+    {
+        AlertRange, ChaseRange, AttackRange
+    }
 
 }

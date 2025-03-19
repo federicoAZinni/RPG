@@ -1,40 +1,45 @@
 using System.Collections;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
 
 namespace RPG.AI
 {
-    public class IdleAIEnemy_State : IStateEnemyAI
+    public class IdleAIEnemy_State : IStateAI
     {
         AIEnemyController aiEnemyController;
         Vector3 startPosRef;
         NavMeshAgent agent;
         Mesh mesh;
-        float visionDistanceToAlert;
+        Transform myTranform , target;
+        float rangeToSearchPlayer;
+
 
         //Random Pos
         float areaRadius = 5;
         float timeToMoveToRandomPos;
         Vector3 posRandom;
 
-        public IdleAIEnemy_State(AIEnemyController aiEnemyController, float visionDistanceToAlert, NavMeshAgent agent, Mesh mesh)
+        CancellationTokenSource tokenSource;
+        public IdleAIEnemy_State(IStateMachine aiEnemyController, Transform myTranform,NavMeshAgent agent, Mesh mesh, float rangeToSearchPlayer)
         {
-            this.aiEnemyController = aiEnemyController;
+            this.aiEnemyController = (AIEnemyController)aiEnemyController;
             this.agent = agent;
             this.mesh = mesh;
-            this.visionDistanceToAlert = visionDistanceToAlert;
+            this.myTranform = myTranform;
+            this.rangeToSearchPlayer = rangeToSearchPlayer;
         }
 
         public async void OnStart()
         {
             Debug.Log($"OnStart, State : {this.GetType().Name}");
 
-            var tokenSource = new CancellationTokenSource();
+            tokenSource = new CancellationTokenSource();
             CancellationToken ct = tokenSource.Token;
 
-            startPosRef = aiEnemyController.GetPosition();
+            startPosRef = myTranform.position;
 
             AIEnemyController.OnExitPlayMode += () => { tokenSource.Cancel(); };
 
@@ -47,6 +52,7 @@ namespace RPG.AI
         public void OnFinish()
         {
             Debug.Log($"OnFinish, State : {this.GetType().Name}");
+            tokenSource.Cancel();
         }
 
         public Color ColorGUI() => Color.white;
@@ -55,20 +61,21 @@ namespace RPG.AI
         {
             float time = 0;
 
-            while (!aiEnemyController.OnVision(visionDistanceToAlert))
+            while (true)
             {
                 if (cancellationToken.IsCancellationRequested) //Necesario para frenar la Task despues de salir del playmode, sin esto, sigue corriendo hasta darle play devuelta
-                    return;//cancellationToken.ThrowIfCancellationRequested();
+                     return;
 
-                SearchPlayer();
-
-                time = MoveInRandomPosOnArea(time);
+                if(SearchPlayer() && aiEnemyController.OnVisionAndRange(OnVisionAndRangeState.AlertRange))
+                {
+                    aiEnemyController.ChangeState(State.Alert);
+                    return;
+                }else
+                    time = MoveInRandomPosOnArea(time);
 
                 await Task.Yield();
-
             }
 
-            aiEnemyController.ChangeState(State.Alert);
 
         }
 
@@ -84,19 +91,23 @@ namespace RPG.AI
 
             time += Time.deltaTime;
             return time;
-        }
+        } 
 
-        public void SearchPlayer()
+        public bool SearchPlayer()
         {
-            Collider[] possibleTargets = Physics.OverlapSphere(aiEnemyController.GetPosition(), 20, LayerMask.GetMask("Characters"));
+            Collider[] possibleTargets = Physics.OverlapSphere(myTranform.position, rangeToSearchPlayer, LayerMask.GetMask("Characters"));
 
             for (int i = 0; i < possibleTargets.Length; i++)
             {
                 if (possibleTargets[i].CompareTag("Player"))
                 {
-                    aiEnemyController.Player_T = possibleTargets[i].transform;
+                    target = possibleTargets[i].transform;
+                    aiEnemyController.SetTarget(target);
+                    return true;
                 }
             }
+            aiEnemyController.Target = null;
+            return false;
         }
 
         Vector3 GetPosAvailablePosInArea(Mesh meshPrefab)
@@ -111,10 +122,10 @@ namespace RPG.AI
                 {
                     if (hit.transform.CompareTag("Ground"))
                         return new Vector3(randomPosInSphere.x, hit.point.y + yHeight, randomPosInSphere.z);
-                    else Debug.LogError("Hit on object without tag Ground");
+                    
                 }
             }
-
+            Debug.LogError("Hit on object without tag Ground");
             return Vector3.zero;
 
         }

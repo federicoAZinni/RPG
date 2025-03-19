@@ -6,26 +6,25 @@ using System.Threading.Tasks;
 
 namespace RPG.AI
 {
-    public class AttackAIEnemy_State : IStateEnemyAI
+    public class AttackAIEnemy_State : IStateAI
     {
-
-        
-
         private AIEnemyController aiEnemyController;
         private float rangeToAttack;
         private float timeWaitBeforeAttack, attackDamage;
         private Animator anim;
+        float visionOpening;
 
         private IDamageable target;
         float coolDownAttack;
 
-        public AttackAIEnemy_State(AIEnemyController aiEnemyController, Animator anim,float rangeToAttack, float timeWaitBeforeAttack, float attackDamage)
+        public AttackAIEnemy_State(AIEnemyController aiEnemyController, Animator anim,float rangeToAttack, float timeWaitBeforeAttack, float attackDamage, float visionOpening)
         {
             this.aiEnemyController = aiEnemyController;
             this.rangeToAttack = rangeToAttack;
             this.timeWaitBeforeAttack = timeWaitBeforeAttack;
             this.anim = anim;
             this.attackDamage = attackDamage;
+            this.visionOpening = visionOpening;
         }
 
         public async void OnStart()
@@ -47,7 +46,7 @@ namespace RPG.AI
         {
             if(coolDownAttack==0) coolDownAttack = timeWaitBeforeAttack;
 
-            while (aiEnemyController.onRangeToAttack)
+            while (AIUtility.OnVision(aiEnemyController.Target, aiEnemyController.transform, visionOpening, rangeToAttack, aiEnemyController.Target.tag))
             {
                 if (cancellationToken.IsCancellationRequested) //Necesario para frenar la Task despues de salir del playmode, sin esto, sigue corriendo hasta darle play devuelta
                     return; /*cancellationToken.ThrowIfCancellationRequested();*/

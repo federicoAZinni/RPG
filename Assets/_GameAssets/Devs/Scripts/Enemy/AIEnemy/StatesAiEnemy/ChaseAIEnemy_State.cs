@@ -3,21 +3,27 @@ using UnityEngine;
 using System.Threading.Tasks;
 using UnityEngine.AI;
 using System.Threading;
+using UnityEngine.UIElements;
 
 namespace RPG.AI
 {
-    public class ChaseAIEnemy_State : IStateEnemyAI
+    public class ChaseAIEnemy_State : IStateAI
     {
-        Transform target_T;
-        NavMeshAgent agent;
         AIEnemyController aiEnemyController;
+        Transform myTransform;
+        NavMeshAgent agent;
+        
+        float visionDistanceToChase;
+        float visionOpening;
+        float rangeToAttack;
 
-        public ChaseAIEnemy_State(Transform target_T, NavMeshAgent agent, AIEnemyController aiEnemyController)
+        public ChaseAIEnemy_State(AIEnemyController aiEnemyController, Transform myTransform, NavMeshAgent agent, float visionDistanceToChase, float rangeToAttack, float visionOpening)
         {
-            this.target_T = target_T;
-            this.agent = agent;
             this.aiEnemyController = aiEnemyController;
-
+            this.agent = agent;
+            this.visionDistanceToChase = visionDistanceToChase;
+            this.visionOpening= visionOpening;
+            this.rangeToAttack = rangeToAttack;
         }
 
         public async void OnStart()
@@ -34,31 +40,25 @@ namespace RPG.AI
 
         public async Task Action(CancellationToken cancellationToken)
         {
-            while (aiEnemyController.onVisionToAlert) 
+            while (aiEnemyController.OnVisionAndRange(OnVisionAndRangeState.ChaseRange))
             {
                 if (cancellationToken.IsCancellationRequested) //Necesario para frenar la Task despues de salir del playmode, sin esto, sigue corriendo hasta darle play devuelta
                     return; /*cancellationToken.ThrowIfCancellationRequested();*/
 
-                agent.SetDestination(target_T.position);
+                agent.SetDestination(aiEnemyController.Target.position);
 
-                if(aiEnemyController.onRangeToAttack)
+                if (aiEnemyController.OnVisionAndRange(OnVisionAndRangeState.AttackRange))
                 {
-                    //aiEnemyController.ChangeState(State.Attack);
-
                     int probabilityToAttack = 10;
 
-                    if(probabilityToAttack<= Random.Range(0,100))
+                    if (probabilityToAttack <= Random.Range(0, 100))
                     {
                         aiEnemyController.ChangeState(State.Attack);
                     }
                     else
                     {
                         //Random.onUnitSphere;
-
-                         
                     }
-
-
                     return;
                 }
 

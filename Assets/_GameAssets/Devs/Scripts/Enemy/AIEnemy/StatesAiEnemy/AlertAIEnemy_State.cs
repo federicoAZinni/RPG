@@ -7,12 +7,11 @@ using UnityEngine.AI;
 
 namespace RPG.AI
 {
-    public class AlertAIEnemy_State : IStateEnemyAI
+    public class AlertAIEnemy_State : IStateAI
     {
         AIEnemyController aiEnemyController;
 
         Transform myTransform;
-        Transform player_T;
         Vector3 lastPosPlayerWatched;
         NavMeshAgent agent;
 
@@ -20,9 +19,8 @@ namespace RPG.AI
 
         float timeWaitBeforeChase;
 
-        public AlertAIEnemy_State(Transform player_T, Transform myTransform, NavMeshAgent agent, AIEnemyController aiEnemyController, float timeWaitBeforeChase)
+        public AlertAIEnemy_State(AIEnemyController aiEnemyController, Transform myTransform, NavMeshAgent agent, float timeWaitBeforeChase)
         {
-            this.player_T = player_T;
             this.myTransform = myTransform;
             this.aiEnemyController = aiEnemyController;
             this.timeWaitBeforeChase = timeWaitBeforeChase;
@@ -38,7 +36,7 @@ namespace RPG.AI
 
             AIEnemyController.OnExitPlayMode += () => { tokenSource.Cancel(); };
 
-            lastPosPlayerWatched = player_T.position;
+            lastPosPlayerWatched = aiEnemyController.Target.position;
             
             AlertToOtherEnemiesInRange();
 
@@ -51,8 +49,13 @@ namespace RPG.AI
 
             for (int i = 0; i < possibleTargets.Length; i++)
             {
-                Debug.Log(possibleTargets[i].name);
-                possibleTargets[i].GetComponent<AIEnemyController>().ChangeState(State.Alert);
+                //Debug.Log(possibleTargets[i].name);
+                if(possibleTargets[i].TryGetComponent<AIEnemyController>(out AIEnemyController aiEnemy))
+                {
+                    aiEnemy.SetTarget(aiEnemyController.Target);
+                    aiEnemy.ChangeState(State.Alert);
+                }
+                 
             }
         }
 
@@ -71,20 +74,15 @@ namespace RPG.AI
             agent.speed = agent.speed / 3;//Cambiar esto
             agent.SetDestination(lastPosPlayerWatched);
 
+
             while (timeOnVision < timeWaitBeforeChase)
             {
                 if (cancellationToken.IsCancellationRequested) //Necesario para frenar la Task despues de salir del playmode, sin esto, sigue corriendo hasta darle play devuelta
                     return; /*cancellationToken.ThrowIfCancellationRequested();*/
 
-                //Vector3 relativePos = lastPosPlayerWatched - myTransform.position;
-                //Quaternion posWithOutY = Quaternion.LookRotation(relativePos, Vector3.up);
-                //posWithOutY.y= 0;
-                //myTransform.rotation = Quaternion.Lerp(myTransform.rotation, posWithOutY, timeOnVision);
-
-
                 timeOnVision += Time.deltaTime;
 
-                if (aiEnemyController.onVisionToChase)// si en el tiempo de espera se acerca lo suficiente lo persigue.
+                if (aiEnemyController.OnVisionAndRange(OnVisionAndRangeState.ChaseRange))// si en el tiempo de espera se acerca lo suficiente lo persigue.
                 {
                     aiEnemyController.ChangeState(State.Chase);
                     return;
@@ -93,17 +91,16 @@ namespace RPG.AI
                 await Task.Yield();
             }
 
-            if (aiEnemyController.onVisionToAlert)//Si cumple con el tiempo de alerta y está en vision cambia a perseguir
+           if (aiEnemyController.OnVisionAndRange(OnVisionAndRangeState.AlertRange))//Si cumple con el tiempo de alerta y está en vision cambia a perseguir
             {
                 aiEnemyController.ChangeState(State.Chase);
                 return;
             }
 
-            //Si se llega a ir de vision antes de terminar el tiempo, cambia al ultimo estado
+            ////Si se llega a ir de vision antes de terminar el tiempo, cambia al ultimo estado
             aiEnemyController.ChangeState(State.Idle);
-
         }
 
-        
+
     }
 }

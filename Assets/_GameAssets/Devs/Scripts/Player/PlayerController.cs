@@ -43,6 +43,7 @@ namespace RPG.Player
         void Start()
         {
             playerObject = Instantiate(playerPrefab, playerSpawnPoint.position, playerSpawnPoint.rotation);
+            playerObject.layer = LayerMask.NameToLayer("Characters");
             stateCamera.LookAt = playerObject.transform;
             stateCamera.Follow = playerObject.transform;
 
