@@ -170,7 +170,7 @@ MonoBehaviour:
     AngularDampingMode: 0
     RotationDamping: {x: 1, y: 1, z: 1}
     QuaternionDamping: 1
-  FollowOffset: {x: 0, y: 13, z: -13}
+  FollowOffset: {x: 0, y: 10, z: -10}
 --- !u!114 &6275304616823844040
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1170,7 +1170,7 @@ MonoBehaviour:
   m_StreamingVersion: 20241001
   m_LegacyPriority: 0
   DefaultTarget:
-    Enabled: 0
+    Enabled: 1
     Target:
       TrackingTarget: {fileID: 0}
       LookAtTarget: {fileID: 0}

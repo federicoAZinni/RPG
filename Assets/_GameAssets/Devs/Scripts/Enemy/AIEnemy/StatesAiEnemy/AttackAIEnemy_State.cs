@@ -55,8 +55,7 @@ namespace RPG.AI
                 {
                     coolDownAttack = 0;
                     anim.SetTrigger("Attack");
-                    if (target != null) target.Damage(attackDamage);
-                    Debug.Log("Attack");
+                    
                 }
 
                 coolDownAttack += Time.deltaTime;
@@ -65,6 +64,11 @@ namespace RPG.AI
             }
 
             aiEnemyController.ChangeState(State.Chase);
+        }
+
+        public void Attack()
+        {
+            if (target != null) target.Damage(attackDamage);
         }
 
         void OnTargetDies()

@@ -2,6 +2,7 @@ using NUnit.Framework.Constraints;
 using NUnit.Framework.Internal.Builders;
 using System;
 using System.Collections;
+using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UIElements;
@@ -35,13 +36,13 @@ namespace RPG.AI
 
         [Space(5)]
         [Header("Vision Refs")]
-        [Range(0f,1f)]
+        [Range(0f, 1f)]
         [SerializeField] float visionOpening = 0.9f;
         [SerializeField] float visionDistanceToAlert;
         [SerializeField] float visionDistanceToChase;
         [SerializeField] float timeWaitBeforeChase;
 
-        
+
 
         [Space(5)]
         [Header("Attack Refs")]
@@ -55,14 +56,14 @@ namespace RPG.AI
         [SerializeField] float maxHP;
 
         public float HP { get; private set; }
-       
+
 
         //Events
         public event Action OnTargetDies;
         public static Action OnExitPlayMode;
-        
-        
-        
+
+
+
         public Transform GetCurrentTargetTransform() => Target;
         public Vector3 GetPosition() => transform.position;
         public void SetTarget(Transform _target) => Target = _target;
@@ -72,11 +73,11 @@ namespace RPG.AI
         private void InitStates() //Inicializamos cada estado con las dependencias que tengan.
                                   //IMPORTANTE!! SI agregamos un estado nuevo, hay que agregarlo en la funcion GetStateByEnum
         {
-            idleState = new IdleAIEnemy_State(this,transform,agent, meshFilter.sharedMesh, rangeToSearchPlayer);
-            alertState = new AlertAIEnemy_State(this,transform,agent,timeWaitBeforeChase);
-            chaseState = new ChaseAIEnemy_State(this,transform,agent, visionDistanceToChase, rangeToAttack, visionOpening);
-            attackState = new AttackAIEnemy_State(this, anim, rangeToAttack, timeWaitBeforeAttack, attackDamage,visionOpening);
-           
+            idleState = new IdleAIEnemy_State(this, transform, agent, meshFilter.sharedMesh, rangeToSearchPlayer);
+            alertState = new AlertAIEnemy_State(this, transform, agent, timeWaitBeforeChase);
+            chaseState = new ChaseAIEnemy_State(this, transform, agent, visionDistanceToChase, rangeToAttack, visionOpening);
+            attackState = new AttackAIEnemy_State(this, anim, rangeToAttack, timeWaitBeforeAttack, attackDamage, visionOpening);
+
         }
 
         private void Start()
@@ -187,18 +188,21 @@ namespace RPG.AI
         {
             // TODO Handle Enemy death
             anim.SetTrigger("Die");
-            LeanTween.delayedCall(1,() => {
+            LeanTween.delayedCall(1, () => {
                 Destroy(gameObject);
                 OnExitPlayMode?.Invoke();
                 OnTargetDies?.Invoke();
             });
-            
+
         }
 
         public void GiveHP(float ammount) => HP = Mathf.Clamp(HP + ammount, 0, maxHP);
 
         #endregion
 
+
+        public void Attack() { if(target != null) target.GetComponent<IDamageable>().Damage(attackDamage); }
+        
 
 
         private void Update() 
