@@ -28,7 +28,7 @@ namespace RPG.Player
             if (!moduleEnabled) return;
             HP = Mathf.Clamp(HP - ammount, 0, maxHP);
             pController.OnPlayerHPChange(HP);
-            Debug.LogFormat("Player loss {0} HP!", ammount);
+            Debug.LogFormat("Player lost {0} HP!", ammount);
             if (HP == 0) OnDeath();
         }
 

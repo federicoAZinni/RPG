@@ -5,20 +5,20 @@ namespace RPG
     public class WorldTrap : MonoBehaviour
     {
         enum TrapType { Stationary, OpenClose, TrackMovement  }
-
-        enum DamageType { ByCollision, ByTime }
+        enum DamageType { ByContact, ByTime }
 
         [SerializeField] bool enabledAtStart = true;
         [SerializeField] TrapType trapType;
         [SerializeField] float damageToDeal, timeToDealDamage;
         [SerializeField] DamageType damageType;
-        [SerializeField] Bounds damageBounds;
+        [SerializeField] Bounds[] damageBounds;
         [SerializeField] LayerMask damageMask;
         [SerializeField] float timeToOpen, timeToClose, openSpeed, closeSpeed;
         [SerializeField] Transform openedPosition, closedPosistion;
         [SerializeField] float trackMoveSpeed;
 
-        public bool TrapEnabled { get; private set; }
+        public bool TrapEnabled { get; set; }
+        public bool CanDamage { get; private set; }
 
         bool isTrapOpened;
         int currentTrackIndex, trackMovementDir;
@@ -42,7 +42,7 @@ namespace RPG
                     break;
 
                 case TrapType.TrackMovement:
-                    Transform[] trackTransforms = transform.GetComponentsInChildren<Transform>();
+                    Transform[] trackTransforms = transform.GetChild(1).GetComponentsInChildren<Transform>();
                     int size = trackTransforms.Length;
 
                     trackPoints = new Vector3[size];
@@ -57,6 +57,9 @@ namespace RPG
 
         void Start()
         {
+            if (trapType != TrapType.OpenClose) CanDamage = true;
+            else transform.position = closedPoint;
+
             TrapEnabled = enabledAtStart;
             damageTimer = Time.time + timeToDealDamage;
         }
@@ -71,9 +74,11 @@ namespace RPG
                 case TrapType.TrackMovement: TrackMovementBehaviour(); break;
             }
 
+            if (!CanDamage) return;
+
             switch (damageType)
             {
-                case DamageType.ByCollision: HanldeDamageByCollision(); break;
+                case DamageType.ByContact: HanldeDamageByContact(); break;
                 case DamageType.ByTime: HandleDamageByTime(); break;
             }
         }
@@ -85,46 +90,72 @@ namespace RPG
                 if (openCloseTimer > Time.time) return;
                 
                 if (Vector3.Distance(transform.position, closedPoint) < Vector3.kEpsilon)
+                {
+                    isTrapOpened = CanDamage = false;
                     openCloseTimer = Time.time + timeToOpen;
+                }
 
-                transform.position = Vector3.MoveTowards(transform.position, closedPoint, closeSpeed);
+                transform.position = Vector3.MoveTowards(transform.position, closedPoint, closeSpeed * Time.deltaTime);
                 return;
             }
 
             if (openCloseTimer > Time.time) return;
 
-            if (Vector3.Distance(transform.position, closedPoint) < Vector3.kEpsilon)
+            if (Vector3.Distance(transform.position, openedPoint) < Vector3.kEpsilon)
+            {
+                isTrapOpened = true;
                 openCloseTimer = Time.time + timeToClose;
+            }
 
-            transform.position = Vector3.MoveTowards(transform.position, openedPoint, openSpeed);
+            CanDamage = true;
+            transform.position = Vector3.MoveTowards(transform.position, openedPoint, openSpeed * Time.deltaTime);
         }
 
         void TrackMovementBehaviour()
         {
-            if (currentTrackIndex == trackPoints.Length) trackMovementDir = -1;
+            if (currentTrackIndex == trackPoints.Length - 1) trackMovementDir = -1;
             else if (currentTrackIndex == 0) trackMovementDir = 1;
 
             if (Vector3.Distance(transform.position, trackPoints[currentTrackIndex]) < Vector3.kEpsilon)
-                currentTrackIndex = Mathf.Clamp(currentTrackIndex + trackMovementDir, 0, trackPoints.Length);
+                currentTrackIndex = Mathf.Clamp(currentTrackIndex + trackMovementDir, 0, trackPoints.Length - 1);
 
             transform.position = Vector3.MoveTowards(transform.position, trackPoints[currentTrackIndex], trackMoveSpeed * Time.deltaTime);
         }
 
-        void HanldeDamageByCollision()
+        void HanldeDamageByContact()
         {
+            if (damageTimer > Time.time) return;
 
+            int size = damageBounds.Length;
+            for (int i = 0; i < size; i++)
+            {
+                int quantity = Physics.OverlapBoxNonAlloc(transform.position + damageBounds[i].center, damageBounds[i].extents, possibleTargets, transform.rotation, damageMask);
+                for (int j = 0; j < quantity; j++)
+                {
+                    IDamageable target = possibleTargets[j].GetComponent<IDamageable>();
+                    if (target == null || target.HP <= 0) continue;
+                    target.Damage(damageToDeal);
+                }
+            }
+
+            damageTimer = Time.time + .25f;
         }
 
         void HandleDamageByTime()
         {
             if (damageTimer > Time.time) return;
 
-            int quantity = Physics.OverlapBoxNonAlloc(transform.position + damageBounds.center, damageBounds.extents, possibleTargets, transform.rotation, damageMask);
-            for (int i = 0; i < quantity; i++)
+            float random = Random.Range(0f, 1f);
+
+            if (random > .15f)
             {
-                IDamageable target = possibleTargets[i].GetComponent<IDamageable>();
-                if (target == null || target.HP <= 0) return;
-                target.Damage(damageToDeal);
+                int quantity = Physics.OverlapBoxNonAlloc(transform.position + damageBounds[0].center, damageBounds[0].extents, possibleTargets, transform.rotation, damageMask);
+                for (int i = 0; i < quantity; i++)
+                {
+                    IDamageable target = possibleTargets[i].GetComponent<IDamageable>();
+                    if (target == null || target.HP <= 0) continue;
+                    target.Damage(damageToDeal);
+                }
             }
 
             damageTimer = Time.time + timeToDealDamage;
@@ -132,9 +163,26 @@ namespace RPG
 
         void OnDrawGizmosSelected()
         {
-            Gizmos.color = Color.red;
+            if (damageBounds == null || damageBounds.Length == 0) return;
             Gizmos.matrix = Matrix4x4.TRS(transform.position, transform.rotation, Vector3.one);
-            Gizmos.DrawWireCube(damageBounds.center, damageBounds.size);
+
+            if (damageType == DamageType.ByTime)
+            {
+                Gizmos.color = Color.red;
+                Gizmos.DrawWireCube(damageBounds[0].center, damageBounds[0].size);
+                return;
+            }
+
+            Color[] colorArray = new Color[] { Color.red, Color.green, Color.blue, Color.white, Color.yellow, Color.black, Color.magenta, Color.cyan };
+            int size = damageBounds.Length;
+
+            for (int i = 0, c = 0; i < size; i++, c++)
+            {
+                if (c >= colorArray.Length) c = 0;
+
+                Gizmos.color = colorArray[c];
+                Gizmos.DrawWireCube(damageBounds[i].center, damageBounds[i].size);
+            }
         }
     }
 }
