@@ -65,7 +65,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   eventName: Attack
-  triggerTime: 0.5
+  triggerTime: 0.549
 --- !u!91 &9100000
 AnimatorController:
   m_ObjectHideFlags: 0

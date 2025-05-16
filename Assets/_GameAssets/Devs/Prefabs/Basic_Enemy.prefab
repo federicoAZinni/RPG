@@ -269,6 +269,7 @@ GameObject:
   - component: {fileID: 5893033455293528202}
   - component: {fileID: 5737107603724966820}
   - component: {fileID: 429572825248074025}
+  - component: {fileID: 6920821788398288193}
   m_Layer: 7
   m_Name: Basic_Enemy
   m_TagString: Untagged
@@ -363,6 +364,35 @@ MonoBehaviour:
   timeWaitBeforeAttack: 5
   attackDamage: 5
   maxHP: 25
+--- !u!114 &6920821788398288193
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6929233850846046890}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e88a6cea0176084f9e5c29d4927bac0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  events:
+  - functionName: Attack
+    eventUnity:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 429572825248074025}
+          m_TargetAssemblyTypeName: RPG.AI.AIEnemyController, RPG
+          m_MethodName: Attack
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1001 &2748263623460486074
 PrefabInstance:
   m_ObjectHideFlags: 0

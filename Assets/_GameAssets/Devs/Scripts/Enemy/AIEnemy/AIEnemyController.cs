@@ -75,8 +75,8 @@ namespace RPG.AI
         {
             idleState = new IdleAIEnemy_State(this, transform, agent, meshFilter.sharedMesh, rangeToSearchPlayer);
             alertState = new AlertAIEnemy_State(this, transform, agent, timeWaitBeforeChase);
-            chaseState = new ChaseAIEnemy_State(this, transform, agent, visionDistanceToChase, rangeToAttack, visionOpening);
-            attackState = new AttackAIEnemy_State(this, anim, rangeToAttack, timeWaitBeforeAttack, attackDamage, visionOpening);
+            chaseState = new ChaseAIEnemy_State(this, transform, agent);
+            attackState = new AttackAIEnemy_State(this, agent, anim, rangeToAttack, timeWaitBeforeAttack, attackDamage, visionOpening);
 
         }
 
@@ -216,12 +216,32 @@ namespace RPG.AI
             if (currentState == null) return;
             Gizmos.color = currentState.ColorGUI();
             Gizmos.DrawSphere(new Vector3(transform.position.x, transform.position.y + 2, transform.position.z), 0.5f);
+
+
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(new Vector3(transform.position.x, transform.position.y, transform.position.z), rangeToAttack);
+
+            Gizmos.color = Color.blue;
+            Gizmos.DrawWireSphere(new Vector3(transform.position.x, transform.position.y, transform.position.z), visionDistanceToAlert);
+
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(new Vector3(transform.position.x, transform.position.y, transform.position.z), visionDistanceToChase);
+
+            //Gizmos.color = Color.yellow;
+            //float angle = UnityEngine.Random.Range(0, 360);
+            //Gizmos.DrawWireSphere(target.position-new Vector3(Mathf.Cos(angle) * (rangeToAttack / 2), 0, (Mathf.Sin(angle) * (rangeToAttack / 2))), 0.5f);
+
         }
 
         private void OnApplicationQuit()
         {
             OnExitPlayMode?.Invoke();
+            Debug.Log("asdkfjhaskldjfh");
         }
+
+        #region Debug
+        
+        #endregion
 
     }
 

@@ -10,20 +10,12 @@ namespace RPG.AI
     public class ChaseAIEnemy_State : IStateAI
     {
         AIEnemyController aiEnemyController;
-        Transform myTransform;
         NavMeshAgent agent;
-        
-        float visionDistanceToChase;
-        float visionOpening;
-        float rangeToAttack;
 
-        public ChaseAIEnemy_State(AIEnemyController aiEnemyController, Transform myTransform, NavMeshAgent agent, float visionDistanceToChase, float rangeToAttack, float visionOpening)
+        public ChaseAIEnemy_State(AIEnemyController aiEnemyController, Transform myTransform, NavMeshAgent agent)
         {
             this.aiEnemyController = aiEnemyController;
             this.agent = agent;
-            this.visionDistanceToChase = visionDistanceToChase;
-            this.visionOpening= visionOpening;
-            this.rangeToAttack = rangeToAttack;
         }
 
         public async void OnStart()
@@ -31,6 +23,8 @@ namespace RPG.AI
             Debug.Log($"OnStart, State : {this.GetType().Name}");
             var tokenSource = new CancellationTokenSource();
             CancellationToken ct = tokenSource.Token;
+
+            agent.isStopped = false;
 
             AIEnemyController.OnExitPlayMode += () => { tokenSource.Cancel(); };
 
@@ -49,16 +43,14 @@ namespace RPG.AI
 
                 if (aiEnemyController.OnVisionAndRange(OnVisionAndRangeState.AttackRange))
                 {
-                    int probabilityToAttack = 10;
-
-                    if (probabilityToAttack <= Random.Range(0, 100))
-                    {
+                    
                         aiEnemyController.ChangeState(State.Attack);
-                    }
-                    else
-                    {
-                        //Random.onUnitSphere;
-                    }
+                        agent.ResetPath();
+                    
+                    //else
+                    //{
+                    //    //Random.onUnitSphere;
+                    //}
                     return;
                 }
 
