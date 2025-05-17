@@ -12,9 +12,6 @@ namespace RPG.AI
     public class AIEnemyController : MonoBehaviour, IDamageable, IStateMachine
     {
 
-        //Lista de cosas:
-        //Hacer que si un enemigo se pone en alerta, se pongan en aletar los enemigos cercanos.
-
         //Dependencias
         [SerializeField] float rangeToSearchPlayer;
         [SerializeField] Transform target;
@@ -22,12 +19,14 @@ namespace RPG.AI
         [SerializeField] NavMeshAgent agent;
         [SerializeField] SkinnedMeshRenderer meshFilter;
         [SerializeField] Animator anim;
+        [SerializeField] TypeAttack typeAttack;
 
         //All AIState Refes
         IdleAIEnemy_State idleState;
         AlertAIEnemy_State alertState;
-        AttackAIEnemy_State attackState;
         ChaseAIEnemy_State chaseState;
+        IAttackType attackState;
+        
 
         //
         IStateAI lastState;
@@ -76,8 +75,11 @@ namespace RPG.AI
             idleState = new IdleAIEnemy_State(this, transform, agent, meshFilter.sharedMesh, rangeToSearchPlayer);
             alertState = new AlertAIEnemy_State(this, transform, agent, timeWaitBeforeChase);
             chaseState = new ChaseAIEnemy_State(this, transform, agent);
-            attackState = new AttackAIEnemy_State(this, agent, anim, rangeToAttack, timeWaitBeforeAttack, attackDamage, visionOpening);
-
+           
+            if(typeAttack == TypeAttack.Melee)
+                attackState = new AttackAIEnemyMelee_State(this, agent, anim, rangeToAttack, timeWaitBeforeAttack, attackDamage, visionOpening);
+            else
+                attackState = new AttackAIEnemyRange_State(this, agent, anim, rangeToAttack, timeWaitBeforeAttack, attackDamage, visionOpening);
         }
 
         private void Start()
@@ -129,7 +131,7 @@ namespace RPG.AI
                 case State.Chase:
                     return chaseState;
                 case State.Attack:
-                    return attackState;
+                    return (IStateAI)attackState;
                 default:
                     break;
             }
@@ -141,6 +143,8 @@ namespace RPG.AI
         #region OnVision And Range States
         public bool OnVisionAndRange(OnVisionAndRangeState rangeState)
         {
+            if (target == null) return false;
+
             float distance = 0;
 
             switch (rangeState)
@@ -236,7 +240,6 @@ namespace RPG.AI
         private void OnApplicationQuit()
         {
             OnExitPlayMode?.Invoke();
-            Debug.Log("asdkfjhaskldjfh");
         }
 
         #region Debug
@@ -247,7 +250,11 @@ namespace RPG.AI
 
 
 
-
+    public enum TypeAttack
+    {
+        Melee,
+        Range
+    }
     public enum State
     {
         Idle,Alert,Chase,Attack

@@ -25,7 +25,7 @@ namespace RPG
 
         public void NotifyEvent(Animator anim)
         {
-            if(anim.TryGetComponent<AnimationEventReciever>(out AnimationEventReciever animationEventReciever))
+            if(anim.transform.root.TryGetComponent<AnimationEventReciever>(out AnimationEventReciever animationEventReciever))
             {
                 animationEventReciever.OnAnimationEventTriggered(eventName);
             }

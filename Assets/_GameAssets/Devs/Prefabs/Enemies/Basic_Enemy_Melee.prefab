@@ -271,7 +271,7 @@ GameObject:
   - component: {fileID: 429572825248074025}
   - component: {fileID: 6920821788398288193}
   m_Layer: 7
-  m_Name: Basic_Enemy
+  m_Name: Basic_Enemy_Melee
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -331,7 +331,7 @@ NavMeshAgent:
   m_Acceleration: 6
   avoidancePriority: 50
   m_AngularSpeed: 240
-  m_StoppingDistance: 2.5
+  m_StoppingDistance: 0
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
   m_AutoRepath: 1
@@ -356,11 +356,12 @@ MonoBehaviour:
   agent: {fileID: 5737107603724966820}
   meshFilter: {fileID: 6119456670897309805}
   anim: {fileID: 6119456670901565101}
+  typeAttack: 0
   visionOpening: 0.7
   visionDistanceToAlert: 10
   visionDistanceToChase: 8
   timeWaitBeforeChase: 1
-  rangeToAttack: 3
+  rangeToAttack: 5
   timeWaitBeforeAttack: 5
   attackDamage: 5
   maxHP: 25
@@ -401,6 +402,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 3518563456797230516}
     m_Modifications:
+    - target: {fileID: 8272943599214529815, guid: 47b41978aba272c47ae5f4a2f7179c61, type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8272943599223628453, guid: 47b41978aba272c47ae5f4a2f7179c61, type: 3}
       propertyPath: m_LocalScale.x
       value: 1.8
