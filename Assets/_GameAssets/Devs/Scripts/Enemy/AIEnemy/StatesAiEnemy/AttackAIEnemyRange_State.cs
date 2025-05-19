@@ -47,10 +47,11 @@ namespace RPG
 
         public async Task Action(CancellationToken cancellationToken)
         {
-            coolDownAttack = timeWaitBeforeAttack + 1;
+            if (coolDownAttack == 0) coolDownAttack = timeWaitBeforeAttack + 1;
+
             if (cancellationToken.IsCancellationRequested) return;
 
-            while (AIUtility.OnVision(aiEnemyController.Target, aiEnemyController.transform, visionOpening, rangeToAttack, aiEnemyController.Target.tag))
+            while (aiEnemyController.OnVisionAndRange(OnVisionAndRangeState.AttackRange)/*AIUtility.OnVision(aiEnemyController.Target, aiEnemyController.transform, visionOpening, rangeToAttack, aiEnemyController.Target.tag)*/)
             {
                 if (cancellationToken.IsCancellationRequested) //Necesario para frenar la Task despues de salir del playmode, sin esto, sigue corriendo hasta darle play devuelta
                     return; /*cancellationToken.ThrowIfCancellationRequested();*/

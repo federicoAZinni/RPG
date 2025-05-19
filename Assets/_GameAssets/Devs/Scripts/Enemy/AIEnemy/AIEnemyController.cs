@@ -77,7 +77,7 @@ namespace RPG.AI
             chaseState = new ChaseAIEnemy_State(this, transform, agent);
            
             if(typeAttack == TypeAttack.Melee)
-                attackState = new AttackAIEnemyMelee_State(this, agent, anim, rangeToAttack, timeWaitBeforeAttack, attackDamage, visionOpening);
+                attackState = new AttackAIEnemyMelee_State(this, agent, anim, timeWaitBeforeAttack, rangeToAttack,attackDamage);
             else
                 attackState = new AttackAIEnemyRange_State(this, agent, anim, rangeToAttack, timeWaitBeforeAttack, attackDamage, visionOpening);
         }
@@ -98,14 +98,12 @@ namespace RPG.AI
 
             if (currentState == newState) return;
 
-            agent.isStopped = true;
+            if(agent.hasPath) agent.ResetPath();
 
             currentState?.OnFinish(); //Se ejecuta el final del estado
 
             lastState = currentState;
             currentState = newState;
-
-            agent.isStopped = false;
 
             currentState.OnStart(); //Se ejecuta el inicio del nuevo estado
         }

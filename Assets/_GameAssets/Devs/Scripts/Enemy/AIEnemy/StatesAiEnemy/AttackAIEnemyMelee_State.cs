@@ -10,24 +10,21 @@ namespace RPG.AI
     public class AttackAIEnemyMelee_State : IStateAI, IAttackType
     {
         private AIEnemyController aiEnemyController;
-        private float rangeToAttack;
-        private float timeWaitBeforeAttack, attackDamage;
+        private float timeWaitBeforeAttack, attackDamage, rangeToAttack;
         private Animator anim;
         private NavMeshAgent agent;
-        float visionOpening;
-        int probabilityToAttack = 100;
+        int probabilityToAttack = 25;
         private IDamageable target;
         float coolDownAttack;
         CancellationTokenSource tokenSource;
 
-        public AttackAIEnemyMelee_State(AIEnemyController aiEnemyController, NavMeshAgent agent, Animator anim,float rangeToAttack, float timeWaitBeforeAttack, float attackDamage, float visionOpening)
+        public AttackAIEnemyMelee_State(AIEnemyController aiEnemyController, NavMeshAgent agent, Animator anim, float timeWaitBeforeAttack,float rangeToAttack, float attackDamage)
         {
             this.aiEnemyController = aiEnemyController;
-            this.rangeToAttack = rangeToAttack;
             this.timeWaitBeforeAttack = timeWaitBeforeAttack;
+            this.rangeToAttack = rangeToAttack;
             this.anim = anim;
             this.attackDamage = attackDamage;
-            this.visionOpening = visionOpening;
             this.agent = agent;
         }
 
@@ -48,8 +45,11 @@ namespace RPG.AI
 
         public async Task Action(CancellationToken cancellationToken)
         {
-            coolDownAttack = timeWaitBeforeAttack+1;
-            while (AIUtility.OnVision(aiEnemyController.Target, aiEnemyController.transform, visionOpening, rangeToAttack, aiEnemyController.Target.tag))
+            if(coolDownAttack==0) coolDownAttack = timeWaitBeforeAttack+1;
+
+            if (cancellationToken.IsCancellationRequested) return;
+
+            while (aiEnemyController.OnVisionAndRange(OnVisionAndRangeState.AttackRange)/*AIUtility.OnVision(aiEnemyController.Target, aiEnemyController.transform, visionOpening, rangeToAttack, aiEnemyController.Target.tag)*/)
             {
                 if (cancellationToken.IsCancellationRequested) //Necesario para frenar la Task despues de salir del playmode, sin esto, sigue corriendo hasta darle play devuelta
                     return; /*cancellationToken.ThrowIfCancellationRequested();*/
@@ -58,9 +58,25 @@ namespace RPG.AI
 
                 if (timeWaitBeforeAttack < coolDownAttack)
                 {
+                    if (Random.Range(0, 100) <= probabilityToAttack)
+                    {
+                        agent.isStopped = true;
+                        anim.SetTrigger("Attack");
+                        agent.ResetPath();
+                    }
+                    if (!agent.hasPath)
+                        {
+                            agent.isStopped = false;
+                            float angle = Random.Range(0, 360);
+                            Vector3 posRandomOnPerimeterPlayer = target.GetPosition() - new Vector3(Mathf.Cos(angle) * (rangeToAttack * 0.8f), 0, (Mathf.Sin(angle) * (rangeToAttack * 0.8f)));
+
+                            agent.SetDestination(posRandomOnPerimeterPlayer);
+                        }
+                        
+                    
                     coolDownAttack = 0;
-                    anim.SetTrigger("Attack");
                 }
+
 
                 coolDownAttack += Time.deltaTime;
 
@@ -69,6 +85,7 @@ namespace RPG.AI
 
             aiEnemyController.ChangeState(State.Chase);
         }
+
 
         public void Attack()
         {

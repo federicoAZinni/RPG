@@ -24,8 +24,6 @@ namespace RPG.AI
             var tokenSource = new CancellationTokenSource();
             CancellationToken ct = tokenSource.Token;
 
-            agent.isStopped = false;
-
             AIEnemyController.OnExitPlayMode += () => { tokenSource.Cancel(); };
 
             await Action(ct);
