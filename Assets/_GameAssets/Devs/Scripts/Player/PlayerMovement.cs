@@ -31,6 +31,7 @@ namespace RPG.Player
         }
 
         public void ToggleModule(bool toggle) => moduleEnabled = toggle;
+
         void Update()
         {
             if (!moduleEnabled) return;
@@ -38,6 +39,7 @@ namespace RPG.Player
             //if (inputListener.MoveValue.x != 0 && inputListener.MoveValue.y != 0 && inputListener.MoveValue.x == inputListener.MoveValue.y) currentMovementSpeed *= .5f;
 
             Vector3 dir = new Vector3(inputListener.MoveValue.x, 0, inputListener.MoveValue.y);
+            if (CharCtrl.isGrounded) dir.y += Physics.gravity.y;
             CharCtrl.Move(currentMovementSpeed * Time.deltaTime * dir);
 
             if (!cursor.IsLocked) cursor.transform.position += currentMovementSpeed * Time.deltaTime * dir;
