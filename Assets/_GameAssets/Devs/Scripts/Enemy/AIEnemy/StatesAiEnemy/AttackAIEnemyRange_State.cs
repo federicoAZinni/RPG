@@ -14,7 +14,7 @@ namespace RPG
         private Animator anim;
         private NavMeshAgent agent;
         private float visionOpening;
-        private int probabilityToAttack = 10;
+        //private int probabilityToAttack = 10;
         private IDamageable target;
         private float coolDownAttack;
         private CancellationTokenSource tokenSource;
@@ -51,7 +51,7 @@ namespace RPG
 
             if (cancellationToken.IsCancellationRequested) return;
 
-            while (aiEnemyController.OnVisionAndRange(OnVisionAndRangeState.AttackRange)/*AIUtility.OnVision(aiEnemyController.Target, aiEnemyController.transform, visionOpening, rangeToAttack, aiEnemyController.Target.tag)*/)
+            while (aiEnemyController.OnVisionAndRange(OnVisionAndRangeState.AttackRange))
             {
                 if (cancellationToken.IsCancellationRequested) //Necesario para frenar la Task despues de salir del playmode, sin esto, sigue corriendo hasta darle play devuelta
                     return; /*cancellationToken.ThrowIfCancellationRequested();*/

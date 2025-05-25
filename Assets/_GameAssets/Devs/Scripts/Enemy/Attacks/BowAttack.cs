@@ -5,17 +5,29 @@ namespace RPG
 {
     public class BowAttack : MonoBehaviour
     {
-        AIEnemyController aiEne;
+        [SerializeField] AIEnemyController aiEne;
         [SerializeField] Arrow[] arrows;
         [SerializeField] Transform refPositionArrow;
 
         private void Awake()
         {
-            aiEne = GetComponent<AIEnemyController>();
-
             InitPoolArrow();
         }
 
+
+        public void Attack()
+        {
+            if (aiEne.GetCurrentTargetTransform() == null) return;
+
+            Arrow arrowToUse = GetArrow();
+            
+            Vector3 targetPos = aiEne.GetCurrentTargetTransform().position;
+
+            StartCoroutine(arrowToUse.Trayectoria(arrowToUse.transform.position, targetPos));
+
+        }
+
+        #region PoolArrow
         private void InitPoolArrow()
         {
             foreach (var ar in arrows)
@@ -23,19 +35,6 @@ namespace RPG
                 ar.gameObject.SetActive(false);
                 ar.bowAttack = this;
             }
-        }
-
-        public void Attack()
-        {
-            if (aiEne.GetCurrentTargetTransform() == null) return;
-
-            Debug.Log("Atack");
-            Arrow arrowToUse = GetArrow();
-            
-            Vector3 targetPos = aiEne.GetCurrentTargetTransform().position;
-
-            StartCoroutine(arrowToUse.Trayectoria(arrowToUse.transform.position, targetPos));
-
         }
 
         private Arrow GetArrow()
@@ -60,5 +59,6 @@ namespace RPG
             arrow.transform.position = refPositionArrow.position;
             arrow.transform.SetParent(transform);
         }
+        #endregion  
     }
 }

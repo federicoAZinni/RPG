@@ -1,4 +1,5 @@
 using System.Collections;
+using JetBrains.Annotations;
 using NUnit;
 using UnityEngine;
 
@@ -16,7 +17,6 @@ namespace RPG
             Invoke("BackToPool", 4);
         }
 
-       
 
         public IEnumerator Trayectoria(Vector3 posA , Vector3 posB)
         {
@@ -26,7 +26,7 @@ namespace RPG
             while (t < speedT)
             {
                 Vector3 linear = Vector3.Lerp(posA, posB, t/ speedT);
-                float parabolicOffset = 4 * 2 * t * (1 - t/ speedT);
+                float parabolicOffset = 4 * 2 * t * (1 - t/ speedT); //hermoso esto que me mande aca
 
                 linear.y += parabolicOffset;
 
@@ -44,10 +44,11 @@ namespace RPG
             if (other.TryGetComponent<IDamageable>(out IDamageable target))
             {
                 target.Damage(dmg);
-                Debug.Log("Daño de arrow");
                 BackToPool();
             }
         }
+
+        
 
         void BackToPool()
         {

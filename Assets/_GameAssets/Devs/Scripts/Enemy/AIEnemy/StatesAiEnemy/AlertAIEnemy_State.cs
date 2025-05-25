@@ -49,7 +49,6 @@ namespace RPG.AI
 
             for (int i = 0; i < possibleTargets.Length; i++)
             {
-                //Debug.Log(possibleTargets[i].name);
                 if(possibleTargets[i].TryGetComponent<AIEnemyController>(out AIEnemyController aiEnemy))
                 {
                     aiEnemy.SetTarget(aiEnemyController.Target);

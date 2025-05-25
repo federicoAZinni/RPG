@@ -45,18 +45,18 @@ namespace RPG.AI
 
         public async Task Action(CancellationToken cancellationToken)
         {
-            if(coolDownAttack==0) coolDownAttack = timeWaitBeforeAttack+1;
+            coolDownAttack = coolDownAttack == 0 ? (timeWaitBeforeAttack + 1): coolDownAttack;
 
             if (cancellationToken.IsCancellationRequested) return;
 
-            while (aiEnemyController.OnVisionAndRange(OnVisionAndRangeState.AttackRange)/*AIUtility.OnVision(aiEnemyController.Target, aiEnemyController.transform, visionOpening, rangeToAttack, aiEnemyController.Target.tag)*/)
+            while (aiEnemyController.OnVisionAndRange(OnVisionAndRangeState.AttackRange))
             {
                 if (cancellationToken.IsCancellationRequested) //Necesario para frenar la Task despues de salir del playmode, sin esto, sigue corriendo hasta darle play devuelta
                     return; /*cancellationToken.ThrowIfCancellationRequested();*/
 
                 aiEnemyController.transform.LookAt(new Vector3(target.GetPosition().x, aiEnemyController.transform.position.y, target.GetPosition().z));
 
-                if (timeWaitBeforeAttack < coolDownAttack)
+                if (timeWaitBeforeAttack < coolDownAttack) 
                 {
                     if (Random.Range(0, 100) <= probabilityToAttack)
                     {
@@ -64,19 +64,11 @@ namespace RPG.AI
                         anim.SetTrigger("Attack");
                         agent.ResetPath();
                     }
-                    if (!agent.hasPath)
-                        {
-                            agent.isStopped = false;
-                            float angle = Random.Range(0, 360);
-                            Vector3 posRandomOnPerimeterPlayer = target.GetPosition() - new Vector3(Mathf.Cos(angle) * (rangeToAttack * 0.8f), 0, (Mathf.Sin(angle) * (rangeToAttack * 0.8f)));
 
-                            agent.SetDestination(posRandomOnPerimeterPlayer);
-                        }
-                        
-                    
+                    SetNewPosToAttackAroundTarget();
+
                     coolDownAttack = 0;
                 }
-
 
                 coolDownAttack += Time.deltaTime;
 
@@ -86,6 +78,17 @@ namespace RPG.AI
             aiEnemyController.ChangeState(State.Chase);
         }
 
+        private void SetNewPosToAttackAroundTarget()
+        {
+            if (!agent.hasPath)
+            {
+                agent.isStopped = false;
+                float angle = Random.Range(0, 360);
+                Vector3 posRandomOnPerimeterPlayer = target.GetPosition() - new Vector3(Mathf.Cos(angle) * (rangeToAttack * 0.8f), 0, (Mathf.Sin(angle) * (rangeToAttack * 0.8f)));
+
+                agent.SetDestination(posRandomOnPerimeterPlayer);
+            }
+        }
 
         public void Attack()
         {

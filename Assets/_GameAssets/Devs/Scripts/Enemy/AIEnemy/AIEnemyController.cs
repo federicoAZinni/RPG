@@ -5,6 +5,8 @@ using System.Collections;
 using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Events;
+using UnityEngine.PlayerLoop;
 using UnityEngine.UIElements;
 
 namespace RPG.AI
@@ -60,6 +62,8 @@ namespace RPG.AI
         //Events
         public event Action OnTargetDies;
         public static Action OnExitPlayMode;
+        [Header("Events")]
+        public UnityEvent <float, float> OnTakeDamage;
 
 
 
@@ -86,6 +90,7 @@ namespace RPG.AI
         {
             InitStates();
             ChangeState(State.Idle);
+            GiveHP(maxHP);
         }
 
         #endregion
@@ -180,9 +185,12 @@ namespace RPG.AI
 
         #region IDamageable
 
+        
+
         public void Damage(float ammount)
         {
             HP = Mathf.Clamp(HP - ammount, 0, maxHP);
+            OnTakeDamage?.Invoke(maxHP , HP);
             if (HP == 0) OnDeath();
         }
 
@@ -210,6 +218,8 @@ namespace RPG.AI
         private void Update() 
         {
             anim.SetFloat("Speed", agent.velocity.magnitude);//DOTO: Change this.
+
+            if(Input.GetKeyDown(KeyCode.Space)) Damage(1);
         }
 
 
@@ -239,10 +249,6 @@ namespace RPG.AI
         {
             OnExitPlayMode?.Invoke();
         }
-
-        #region Debug
-        
-        #endregion
 
     }
 
