@@ -469,7 +469,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.0000000037252903, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: -0.100000024, y: -0.10000001}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8819731227165668883
@@ -727,17 +727,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 168750e5c7586a340a82796bf56c4c89, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rangeToSearchPlayer: 20
+  rangeToSearchPlayer: 30
   target: {fileID: 0}
   agent: {fileID: 5737107603724966820}
   meshFilter: {fileID: 6119456670897309805}
   anim: {fileID: 6119456670901565101}
   typeAttack: 0
   visionOpening: 0.7
-  visionDistanceToAlert: 10
-  visionDistanceToChase: 8
+  visionDistanceToAlert: 20
+  visionDistanceToChase: 10
   timeWaitBeforeChase: 1
-  rangeToAttack: 6
+  rangeToAttack: 4
   timeWaitBeforeAttack: 5
   attackDamage: 5
   maxHP: 25

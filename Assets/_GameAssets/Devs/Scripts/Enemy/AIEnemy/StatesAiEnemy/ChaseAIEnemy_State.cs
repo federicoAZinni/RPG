@@ -11,7 +11,7 @@ namespace RPG.AI
     {
         AIEnemyController aiEnemyController;
         NavMeshAgent agent;
-
+        CancellationTokenSource tokenSource;
         public ChaseAIEnemy_State(AIEnemyController aiEnemyController, Transform myTransform, NavMeshAgent agent)
         {
             this.aiEnemyController = aiEnemyController;
@@ -21,7 +21,7 @@ namespace RPG.AI
         public async void OnStart()
         {
             Debug.Log($"OnStart, State : {this.GetType().Name}");
-            var tokenSource = new CancellationTokenSource();
+            tokenSource = new CancellationTokenSource();
             CancellationToken ct = tokenSource.Token;
 
             AIEnemyController.OnExitPlayMode += () => { tokenSource.Cancel(); };
@@ -63,7 +63,7 @@ namespace RPG.AI
 
         public void OnFinish()
         {
-            
+            tokenSource.Cancel();
         }
 
     

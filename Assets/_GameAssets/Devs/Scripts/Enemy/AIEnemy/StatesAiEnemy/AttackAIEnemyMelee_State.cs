@@ -13,7 +13,7 @@ namespace RPG.AI
         private float timeWaitBeforeAttack, attackDamage, rangeToAttack;
         private Animator anim;
         private NavMeshAgent agent;
-        int probabilityToAttack = 25;
+        int probabilityToAttack = 90;
         private IDamageable target;
         float coolDownAttack;
         CancellationTokenSource tokenSource;
@@ -54,24 +54,27 @@ namespace RPG.AI
                 if (cancellationToken.IsCancellationRequested) //Necesario para frenar la Task despues de salir del playmode, sin esto, sigue corriendo hasta darle play devuelta
                     return; /*cancellationToken.ThrowIfCancellationRequested();*/
 
-                aiEnemyController.transform.LookAt(new Vector3(target.GetPosition().x, aiEnemyController.transform.position.y, target.GetPosition().z));
+                
 
                 if (timeWaitBeforeAttack < coolDownAttack) 
                 {
                     if (Random.Range(0, 100) <= probabilityToAttack)
                     {
-                        agent.isStopped = true;
-                        anim.SetTrigger("Attack");
                         agent.ResetPath();
+                        agent.isStopped = true;
+                        aiEnemyController.transform.LookAt(new Vector3(target.GetPosition().x, aiEnemyController.transform.position.y, target.GetPosition().z));
+                        anim.SetTrigger("Attack");
+                        await Task.Delay(2000);
                     }
-
-                    SetNewPosToAttackAroundTarget();
 
                     coolDownAttack = 0;
                 }
+                anim.StopPlayback();
+                SetNewPosToAttackAroundTarget();
 
                 coolDownAttack += Time.deltaTime;
 
+                aiEnemyController.transform.LookAt(new Vector3(target.GetPosition().x, aiEnemyController.transform.position.y, target.GetPosition().z));
                 await Task.Yield();
             }
 
@@ -83,8 +86,13 @@ namespace RPG.AI
             if (!agent.hasPath)
             {
                 agent.isStopped = false;
-                float angle = Random.Range(0, 360);
-                Vector3 posRandomOnPerimeterPlayer = target.GetPosition() - new Vector3(Mathf.Cos(angle) * (rangeToAttack * 0.8f), 0, (Mathf.Sin(angle) * (rangeToAttack * 0.8f)));
+
+                Vector3 posA = target.GetPosition();
+                Vector3 posB = (aiEnemyController.transform.position - posA).normalized;
+
+                float angle = -Mathf.Atan2(posB.x, posB.z) - (Mathf.Deg2Rad * (90 + Random.Range(-90,90)));
+                Vector3 posRandomOnPerimeterPlayer = posA - new Vector3(Mathf.Cos(angle) * (rangeToAttack * 0.8f), 0, Mathf.Sin(angle) * (rangeToAttack * 0.8f));
+
 
                 agent.SetDestination(posRandomOnPerimeterPlayer);
             }

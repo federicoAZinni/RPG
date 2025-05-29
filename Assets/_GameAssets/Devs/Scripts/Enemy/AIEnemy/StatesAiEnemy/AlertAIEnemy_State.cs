@@ -19,6 +19,8 @@ namespace RPG.AI
 
         float timeWaitBeforeChase;
 
+        CancellationTokenSource tokenSource;
+
         public AlertAIEnemy_State(AIEnemyController aiEnemyController, Transform myTransform, NavMeshAgent agent, float timeWaitBeforeChase)
         {
             this.myTransform = myTransform;
@@ -31,14 +33,14 @@ namespace RPG.AI
         {
             Debug.Log($"OnStart, State : {this.GetType().Name}");
 
-            var tokenSource = new CancellationTokenSource();
+            tokenSource = new CancellationTokenSource();
             CancellationToken ct = tokenSource.Token;
 
             AIEnemyController.OnExitPlayMode += () => { tokenSource.Cancel(); };
 
-            lastPosPlayerWatched = aiEnemyController.Target.position;
+            lastPosPlayerWatched =  aiEnemyController!=null ? aiEnemyController.Target.position : Vector3.zero;
             
-            AlertToOtherEnemiesInRange();
+            //AlertToOtherEnemiesInRange();
 
             await Action(ct);
         }
@@ -62,6 +64,7 @@ namespace RPG.AI
         {
             Debug.Log($"OnFinish, State : {this.GetType().Name}");
             agent.speed = agent.speed * 3;//Cambiar esto
+            tokenSource.Cancel();
         }
 
         public Color ColorGUI() => Color.yellow;

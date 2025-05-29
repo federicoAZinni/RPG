@@ -16,5 +16,9 @@ namespace RPG
             LeanTween.value(gameObject, healthBar.rectTransform.localScale.x, temp, 0.5f).setOnUpdate((value) => { healthBar.rectTransform.localScale = new Vector3(value, 1, 1); });
         }
 
+        private void LateUpdate()
+        {
+            c.transform.LookAt(Camera.main.transform.position);
+        }
     }
 }
