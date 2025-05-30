@@ -3,6 +3,9 @@ using NUnit.Framework.Internal.Builders;
 using System;
 using System.Collections;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading;
+using System.Xml.Schema;
+using Unity.IO.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Events;
@@ -17,17 +20,25 @@ namespace RPG.AI
         //Dependencias
         [SerializeField] float rangeToSearchPlayer;
         [SerializeField] Transform target;
-        public Transform Target { get => target; set => target = value; }
         [SerializeField] NavMeshAgent agent;
         [SerializeField] SkinnedMeshRenderer meshFilter;
         [SerializeField] Animator anim;
         [SerializeField] TypeAttack typeAttack;
 
+        //Properties
+        public Transform Target { get => target; set => target = value; }
+        public NavMeshAgent Agent { get => agent; }
+        public SkinnedMeshRenderer MeshFilter { get => meshFilter; }
+        public Animator Anim { get => anim; }
+        public float RangeToSearchPlayer { get => rangeToSearchPlayer; }
+
+
+
         //All AIState Refes
         IdleAIEnemy_State idleState;
         AlertAIEnemy_State alertState;
         ChaseAIEnemy_State chaseState;
-        IAttackType attackState;
+        IStateAI attackState;
         
 
         //
@@ -42,6 +53,12 @@ namespace RPG.AI
         [SerializeField] float visionDistanceToAlert;
         [SerializeField] float visionDistanceToChase;
         [SerializeField] float timeWaitBeforeChase;
+        // Properties 
+        public float VisionOpening { get => visionOpening; }
+        public float VisionDistanceToAlert { get => visionDistanceToAlert; }
+        public float VisionDistanceToChase { get => visionDistanceToChase;  }
+        public float TimeWaitBeforeChase { get => timeWaitBeforeChase; }
+
 
 
 
@@ -50,18 +67,22 @@ namespace RPG.AI
         [SerializeField] float rangeToAttack;
         [SerializeField] float timeWaitBeforeAttack;
         [SerializeField] float attackDamage;
+        // Properties 
+        public float RangeToAttack { get => rangeToAttack; }
+        public float TimeWaitBeforeAttack { get => timeWaitBeforeAttack;  }
+        public float AttackDamage { get => attackDamage; }
 
-
+        
+        
         [Space(5)]
         [Header("Health Refs")]
         [SerializeField] float maxHP;
 
         public float HP { get; private set; }
-
+       
 
         //Events
         public event Action OnTargetDies;
-        public static Action OnExitPlayMode;
         [Header("Events")]
         public UnityEvent <float, float> OnTakeDamage;
 
@@ -72,18 +93,29 @@ namespace RPG.AI
         public void SetTarget(Transform _target) => Target = _target;
 
 
+        CancellationTokenSource tokenSource;
+
         #region Init
         private void InitStates() //Inicializamos cada estado con las dependencias que tengan.
                                   //IMPORTANTE!! SI agregamos un estado nuevo, hay que agregarlo en la funcion GetStateByEnum
         {
-            idleState = new IdleAIEnemy_State(this, transform, agent, meshFilter.sharedMesh, rangeToSearchPlayer);
-            alertState = new AlertAIEnemy_State(this, transform, agent, timeWaitBeforeChase);
-            chaseState = new ChaseAIEnemy_State(this, transform, agent);
-           
-            if(typeAttack == TypeAttack.Melee)
-                attackState = new AttackAIEnemyMelee_State(this, agent, anim, timeWaitBeforeAttack, rangeToAttack,attackDamage);
-            else
-                attackState = new AttackAIEnemyRange_State(this, agent, anim, rangeToAttack, timeWaitBeforeAttack, attackDamage, visionOpening);
+            idleState = new IdleAIEnemy_State(this);
+            alertState = new AlertAIEnemy_State(this);
+            chaseState = new ChaseAIEnemy_State(this);
+
+
+            switch (typeAttack)
+            {
+                case TypeAttack.Melee:
+                    attackState = new AttackAIEnemyMelee_State(this);
+                    break;
+                case TypeAttack.Range:
+                    attackState = new AttackAIEnemyRange_State(this);
+                    break;
+                default:
+                    break;
+            }
+            
         }
 
         private void Start()
@@ -93,17 +125,20 @@ namespace RPG.AI
             GiveHP(maxHP);
         }
 
+
         #endregion
 
         #region StateMachine
 
         public void ChangeState(State _newState) //Cambia el estado y guarda el ultimo en el que estuvo.
         {
+            tokenSource?.Cancel();
+
             IStateAI newState = GetStateByEnum(_newState); //Se obtiene la instancia del estado que corresponda segun el enum del parametro
 
             if (currentState == newState) return;
 
-            if(agent.hasPath) agent.ResetPath();
+            if (agent.hasPath) agent.ResetPath();
 
             currentState?.OnFinish(); //Se ejecuta el final del estado
 
@@ -128,13 +163,21 @@ namespace RPG.AI
             switch (state)
             {
                 case State.Idle:
+                    tokenSource = new CancellationTokenSource();
+                    idleState.tokenSource = tokenSource.Token;
                     return idleState;
                 case State.Alert:
+                    tokenSource = new CancellationTokenSource();
+                    alertState.tokenSource = tokenSource.Token;
                     return alertState;
                 case State.Chase:
+                    tokenSource = new CancellationTokenSource();
+                    chaseState.tokenSource = tokenSource.Token;
                     return chaseState;
                 case State.Attack:
-                    return (IStateAI)attackState;
+                    tokenSource = new CancellationTokenSource();
+                    attackState.tokenSource = tokenSource.Token;
+                    return attackState;
                 default:
                     break;
             }
@@ -153,13 +196,13 @@ namespace RPG.AI
             switch (rangeState)
             {
                 case OnVisionAndRangeState.AlertRange:
-                    distance = visionDistanceToAlert;
+                    distance = VisionDistanceToAlert;
                     break;
                 case OnVisionAndRangeState.ChaseRange:
-                    distance = visionDistanceToChase;
+                    distance = VisionDistanceToChase;
                     break;
                 case OnVisionAndRangeState.AttackRange:
-                    distance = rangeToAttack;
+                    distance = RangeToAttack;
                     break;
                 default:
                     distance = 0;
@@ -175,33 +218,36 @@ namespace RPG.AI
             if (Vector3.Distance(target.position, transform.position) < distance)//Cono de vision.
             {
                 float dot = Vector3.Dot(transform.forward, dir);
-                if (dot > -visionOpening)
+                if (dot > -VisionOpening)
                     return true;
 
             }
             return false;
         }
+
         #endregion
 
         #region IDamageable
 
-        
-
         public void Damage(float ammount)
         {
+            if (HP <= 0) return;
             HP = Mathf.Clamp(HP - ammount, 0, maxHP);
             OnTakeDamage?.Invoke(maxHP , HP);
-            if (HP == 0) OnDeath();
+            if (HP == 0)  OnDeath(); 
         }
 
         public void OnDeath()
         {
             // TODO Handle Enemy death
+            tokenSource.Cancel();
+            agent.isStopped = true;
             anim.SetTrigger("Die");
             LeanTween.delayedCall(1, () => {
-                Destroy(gameObject);
-                OnExitPlayMode?.Invoke();
+                
                 OnTargetDies?.Invoke();
+                //gameObject.SetActive(false);
+                Destroy(gameObject);
             });
 
         }
@@ -211,15 +257,14 @@ namespace RPG.AI
         #endregion
 
 
-        public void Attack() { if(target != null) target.GetComponent<IDamageable>().Damage(attackDamage); }
+        public void Attack() { if(target != null) target.GetComponent<IDamageable>().Damage(AttackDamage); }
         
 
 
         private void Update() 
         {
             anim.SetFloat("Speed", agent.velocity.magnitude);//DOTO: Change this.
-
-            if(Input.GetKeyDown(KeyCode.Space)) Damage(1);
+          
         }
 
 
@@ -231,13 +276,13 @@ namespace RPG.AI
 
 
             Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(new Vector3(transform.position.x, transform.position.y, transform.position.z), rangeToAttack);
+            Gizmos.DrawWireSphere(new Vector3(transform.position.x, transform.position.y, transform.position.z), RangeToAttack);
 
             Gizmos.color = Color.blue;
-            Gizmos.DrawWireSphere(new Vector3(transform.position.x, transform.position.y, transform.position.z), visionDistanceToAlert);
+            Gizmos.DrawWireSphere(new Vector3(transform.position.x, transform.position.y, transform.position.z), VisionDistanceToAlert);
 
             Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(new Vector3(transform.position.x, transform.position.y, transform.position.z), visionDistanceToChase);
+            Gizmos.DrawWireSphere(new Vector3(transform.position.x, transform.position.y, transform.position.z), VisionDistanceToChase);
 
             //Gizmos.color = Color.yellow;
             //float angle = UnityEngine.Random.Range(0, 360);
@@ -247,7 +292,7 @@ namespace RPG.AI
 
         private void OnApplicationQuit()
         {
-            OnExitPlayMode?.Invoke();
+            tokenSource.Cancel();
         }
 
     }
@@ -265,7 +310,7 @@ namespace RPG.AI
     }
     public enum OnVisionAndRangeState
     {
-        AlertRange, ChaseRange, AttackRange
+        AlertRange, ChaseRange, AttackRange, IdleRange
     }
 
 }

@@ -9,40 +9,59 @@ namespace RPG.AI
 {
     public class AlertAIEnemy_State : IStateAI
     {
-        AIEnemyController aiEnemyController;
-
+        AIEnemyController controller;
         Transform myTransform;
+        
+        NavMeshAgent agent; 
         Vector3 lastPosPlayerWatched;
-        NavMeshAgent agent;
-
         Collider[] possibleTargets;
 
-        float timeWaitBeforeChase;
 
-        CancellationTokenSource tokenSource;
-
-        public AlertAIEnemy_State(AIEnemyController aiEnemyController, Transform myTransform, NavMeshAgent agent, float timeWaitBeforeChase)
+        public AlertAIEnemy_State(AIEnemyController controller)
         {
-            this.myTransform = myTransform;
-            this.aiEnemyController = aiEnemyController;
-            this.timeWaitBeforeChase = timeWaitBeforeChase;
-            this.agent = agent;
+            this.controller = controller;
+
+            this.myTransform = controller.transform;
+            this.agent = controller.Agent;
         }
 
-        public async void OnStart()
+        public override Color ColorGUI() => Color.yellow;
+
+        public override async Task OnStart()
         {
-            Debug.Log($"OnStart, State : {this.GetType().Name}");
+            lastPosPlayerWatched = controller.Target.position;
+            await Action(tokenSource);
+        }
 
-            tokenSource = new CancellationTokenSource();
-            CancellationToken ct = tokenSource.Token;
+        public override void OnFinish()
+        {
+            agent.speed = agent.speed * 3;
+        }
+        protected override async Task Action(CancellationToken cancellationToken)
+        {
+            float timeOnVision = 0;
 
-            AIEnemyController.OnExitPlayMode += () => { tokenSource.Cancel(); };
+            agent.speed = agent.speed / 3;//Cambiar esto; 
+            agent.SetDestination(lastPosPlayerWatched);// Camina hasta el punto donde se vio
 
-            lastPosPlayerWatched =  aiEnemyController!=null ? aiEnemyController.Target.position : Vector3.zero;
-            
-            //AlertToOtherEnemiesInRange();
+            while (true)
+            {
+                if (cancellationToken.IsCancellationRequested) return;
 
-            await Action(ct);
+                timeOnVision += Time.deltaTime;
+
+                if(controller.OnVisionAndRange(OnVisionAndRangeState.ChaseRange)) //Si esta dentro del rango de perseguir
+                    controller.ChangeState(State.Chase);
+
+                if(!controller.OnVisionAndRange(OnVisionAndRangeState.AlertRange))//Si esta fuera del rango de Alerta
+                    controller.ChangeState(State.Idle);
+
+                if (timeOnVision > controller.TimeWaitBeforeChase)
+                    controller.ChangeState(State.Idle);
+
+                await Task.Yield();
+            }
+
         }
 
         private void AlertToOtherEnemiesInRange()
@@ -51,58 +70,20 @@ namespace RPG.AI
 
             for (int i = 0; i < possibleTargets.Length; i++)
             {
-                if(possibleTargets[i].TryGetComponent<AIEnemyController>(out AIEnemyController aiEnemy))
+                if (possibleTargets[i].TryGetComponent<AIEnemyController>(out AIEnemyController aiEnemy))
                 {
-                    aiEnemy.SetTarget(aiEnemyController.Target);
+                    aiEnemy.SetTarget(controller.Target);
                     aiEnemy.ChangeState(State.Alert);
                 }
-                 
+
             }
         }
-
-        public void OnFinish()
-        {
-            Debug.Log($"OnFinish, State : {this.GetType().Name}");
-            agent.speed = agent.speed * 3;//Cambiar esto
-            tokenSource.Cancel();
-        }
-
-        public Color ColorGUI() => Color.yellow;
-
-        public async Task Action(CancellationToken cancellationToken)
-        {
-            float timeOnVision = 0;
-
-            agent.speed = agent.speed / 3;//Cambiar esto
-            agent.SetDestination(lastPosPlayerWatched);
-
-
-            while (timeOnVision < timeWaitBeforeChase)
-            {
-                if (cancellationToken.IsCancellationRequested) //Necesario para frenar la Task despues de salir del playmode, sin esto, sigue corriendo hasta darle play devuelta
-                    return; /*cancellationToken.ThrowIfCancellationRequested();*/
-
-                timeOnVision += Time.deltaTime;
-
-                if (aiEnemyController.OnVisionAndRange(OnVisionAndRangeState.ChaseRange))// si en el tiempo de espera se acerca lo suficiente lo persigue.
-                {
-                    aiEnemyController.ChangeState(State.Chase);
-                    return;
-                }
-
-                await Task.Yield();
-            }
-
-           if (aiEnemyController.OnVisionAndRange(OnVisionAndRangeState.AlertRange))//Si cumple con el tiempo de alerta y está en vision cambia a perseguir
-            {
-                aiEnemyController.ChangeState(State.Chase);
-                return;
-            }
-
-            ////Si se llega a ir de vision antes de terminar el tiempo, cambia al ultimo estado
-            aiEnemyController.ChangeState(State.Idle);
-        }
-
-
     }
 }
+
+
+
+
+
+
+

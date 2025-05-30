@@ -3,69 +3,51 @@ using UnityEngine;
 using System.Threading.Tasks;
 using UnityEngine.AI;
 using System.Threading;
-using UnityEngine.UIElements;
 
 namespace RPG.AI
 {
     public class ChaseAIEnemy_State : IStateAI
     {
-        AIEnemyController aiEnemyController;
+        AIEnemyController controller;
         NavMeshAgent agent;
-        CancellationTokenSource tokenSource;
-        public ChaseAIEnemy_State(AIEnemyController aiEnemyController, Transform myTransform, NavMeshAgent agent)
+
+        public ChaseAIEnemy_State(AIEnemyController controller)
         {
-            this.aiEnemyController = aiEnemyController;
-            this.agent = agent;
+            this.controller = controller;
+
+            this.agent = controller.Agent;
         }
 
-        public async void OnStart()
-        {
-            Debug.Log($"OnStart, State : {this.GetType().Name}");
-            tokenSource = new CancellationTokenSource();
-            CancellationToken ct = tokenSource.Token;
-
-            AIEnemyController.OnExitPlayMode += () => { tokenSource.Cancel(); };
-
-            await Action(ct);
-        }
-
-
-        public async Task Action(CancellationToken cancellationToken)
-        {
-            while (aiEnemyController.OnVisionAndRange(OnVisionAndRangeState.ChaseRange))
-            {
-                if (cancellationToken.IsCancellationRequested) //Necesario para frenar la Task despues de salir del playmode, sin esto, sigue corriendo hasta darle play devuelta
-                    return; /*cancellationToken.ThrowIfCancellationRequested();*/
-
-                agent.SetDestination(aiEnemyController.Target.position);
-
-                if (aiEnemyController.OnVisionAndRange(OnVisionAndRangeState.AttackRange))
-                {
-                    
-                        aiEnemyController.ChangeState(State.Attack);
-                        agent.ResetPath();
-                    
-                    //else
-                    //{
-                    //    //Random.onUnitSphere;
-                    //}
-                    return;
-                }
-
-                await Task.Delay(500);
-            }
-
-            aiEnemyController.ChangeState(State.Alert);
-        }
-
-        public Color ColorGUI() =>  Color.magenta;
+        public override Color ColorGUI() => Color.magenta;
         
-
-        public void OnFinish()
+        public override async Task OnStart()
         {
-            tokenSource.Cancel();
+            await Action(tokenSource);
         }
 
-    
+        public override void OnFinish()
+        {
+            
+        }
+
+        protected override async Task Action(CancellationToken cancellationToken)
+        {
+            while (true)
+            {
+                if (cancellationToken.IsCancellationRequested) return;
+
+                agent.SetDestination(controller.Target.position);
+
+                if (!controller.OnVisionAndRange(OnVisionAndRangeState.ChaseRange)) //Si esta fuera del rango de perseguir
+                    controller.ChangeState(State.Alert);
+
+                if (controller.OnVisionAndRange(OnVisionAndRangeState.AttackRange))
+                    controller.ChangeState(State.Attack);
+
+                await Task.Yield();
+            }
+        }
     }
 }
+
+

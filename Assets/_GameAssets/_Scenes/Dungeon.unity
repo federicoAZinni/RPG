@@ -3913,6 +3913,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5737107603724966820, guid: 85919ead23b893a4f93c97ea1c170ec6, type: 3}
+      propertyPath: m_Speed
+      value: 3.5
+      objectReference: {fileID: 0}
     - target: {fileID: 6929233850846046890, guid: 85919ead23b893a4f93c97ea1c170ec6, type: 3}
       propertyPath: m_Name
       value: Basic_Enemy_Melee (1)

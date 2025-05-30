@@ -733,10 +733,10 @@ MonoBehaviour:
   meshFilter: {fileID: 6119456670897309805}
   anim: {fileID: 6119456670901565101}
   typeAttack: 0
-  visionOpening: 0.7
+  visionOpening: 0.6
   visionDistanceToAlert: 20
   visionDistanceToChase: 10
-  timeWaitBeforeChase: 1
+  timeWaitBeforeChase: 2
   rangeToAttack: 4
   timeWaitBeforeAttack: 5
   attackDamage: 5

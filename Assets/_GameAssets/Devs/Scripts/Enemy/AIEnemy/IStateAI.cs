@@ -5,12 +5,13 @@ using System.Threading;
 
 namespace RPG.AI
 {
-    public interface IStateAI
+    public abstract class IStateAI
     {
-        public void OnStart();
-        public void OnFinish();
-        public Color ColorGUI();
-        public Task Action(CancellationToken cancellationToken);
-
+        public CancellationToken tokenSource;
+        public abstract Task OnStart();
+        public abstract  void OnFinish();
+        public abstract Color ColorGUI();
+        protected abstract Task Action(CancellationToken cancellationToken);
+        
     }
 }
