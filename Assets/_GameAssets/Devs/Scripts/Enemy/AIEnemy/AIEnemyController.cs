@@ -259,12 +259,9 @@ namespace RPG.AI
 
         public void Attack() { if(target != null) target.GetComponent<IDamageable>().Damage(AttackDamage); }
         
-
-
         private void Update() 
         {
             anim.SetFloat("Speed", agent.velocity.magnitude);//DOTO: Change this.
-          
         }
 
 

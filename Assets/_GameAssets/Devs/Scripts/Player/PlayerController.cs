@@ -54,7 +54,7 @@ namespace RPG.Player
             PlayerHealth healthModule = null;
 
             int size = playerModules.Length;
-            for (int i = 0; i < size; i++)
+            for (int i = 0; i < size; i++) //Inicia todos los compoenentes que sean modulos del player (IPlayerModule)
             {
                 if (playerModules[i] is PlayerHealth) healthModule = playerModules[i] as PlayerHealth;
                 playerModules[i].Init(this);
