@@ -62,8 +62,8 @@ namespace RPG
         bool CheckCollider(Collider collider)
         {
             if (HastFlag(TriggerTarget.Player) && collider.CompareTag("Player")) return true;
-            if (HastFlag(TriggerTarget.Objects) && collider.gameObject.layer == LayerMask.NameToLayer("Characters")) return true;
-            if (HastFlag(TriggerTarget.AI) && collider.gameObject.layer == LayerMask.NameToLayer("Default")) return true;
+            if (HastFlag(TriggerTarget.AI) && collider.gameObject.layer == LayerMask.NameToLayer("Characters")) return true;
+            if (HastFlag(TriggerTarget.Objects) && collider.gameObject.layer == LayerMask.NameToLayer("Default")) return true;
             return false;
         }
 
