@@ -738,7 +738,7 @@ MonoBehaviour:
   visionDistanceToChase: 10
   timeWaitBeforeChase: 2
   rangeToAttack: 4
-  timeWaitBeforeAttack: 5
+  timeWaitBeforeAttack: 1
   attackDamage: 5
   maxHP: 25
   OnTakeDamage:

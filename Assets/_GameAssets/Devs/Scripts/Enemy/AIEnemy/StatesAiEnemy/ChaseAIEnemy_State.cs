@@ -39,7 +39,7 @@ namespace RPG.AI
                 agent.SetDestination(controller.Target.position);
 
                 if (!controller.OnVisionAndRange(OnVisionAndRangeState.ChaseRange)) //Si esta fuera del rango de perseguir
-                    controller.ChangeState(State.Alert);
+                { await Task.Delay(5000); controller.ChangeState(State.Alert); }
 
                 if (controller.OnVisionAndRange(OnVisionAndRangeState.AttackRange))
                     controller.ChangeState(State.Attack);

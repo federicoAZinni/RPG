@@ -35,7 +35,7 @@ namespace RPG.AI
 
         public override void OnFinish()
         {
-            agent.speed = agent.speed * 3;
+            agent.speed = agent.speed * 3;//Cambiar esto; 
         }
         protected override async Task Action(CancellationToken cancellationToken)
         {

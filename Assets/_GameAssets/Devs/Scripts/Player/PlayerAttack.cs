@@ -57,6 +57,7 @@ namespace RPG.Player
             int quantity = Physics.OverlapSphereNonAlloc(mousePos, .5f, possibleTargets, LayerMask.GetMask("Characters"));
             for (int i = 0; i < quantity; i++)
             {
+                if (possibleTargets[i].CompareTag("Player")) continue; //MMM ver esto. Supongo que no debería haber problema.
                 IDamageable possibleTarget = possibleTargets[i].GetComponent<IDamageable>();
                 if (possibleTarget == null || possibleTarget.HP <= 0) continue;
                 currentTarget = possibleTarget;
