@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace RPG
 {
-    public class Door : MonoBehaviour
+    public class DMDoor : MonoBehaviour
     {
         //[SerializedField] DoorMaster doorMaster;
         [SerializeField] Transform doorModel;

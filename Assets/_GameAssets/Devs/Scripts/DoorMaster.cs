@@ -10,7 +10,7 @@ namespace RPG
 
     public class DoorMaster : MonoBehaviour
     {
-        [SerializeField] Door[] doorSlaves;
+        [SerializeField] DMDoor[] doorSlaves;
         [SerializeField] GenericTrigger[] linkedTriggers;
 
     }
